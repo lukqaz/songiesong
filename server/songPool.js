@@ -3,6 +3,7 @@ const path = require("path");
 
 const {
   extractPlaylistId,
+  fetchPlaylistInfo,
   fetchPlaylistTracks,
 } = require("./spotify");
 
@@ -79,6 +80,9 @@ function loadConfig() {
     CONFIG_PATH,
     {
       playlistUrl: null,
+      playlistName: null,
+      playlistIconUrl: null,
+      playlistSongCount: 0,
       lastImport: null,
     }
   );
@@ -178,6 +182,19 @@ async function importPlaylist(
     );
   }
 
+  // --------------------------------------------------
+  // Playlist-Informationen
+  // --------------------------------------------------
+
+  const playlistInfo =
+    await fetchPlaylistInfo(
+      playlistId
+    );
+
+  // --------------------------------------------------
+  // Playlist-Tracks
+  // --------------------------------------------------
+
   const spotifyTracks =
     await fetchPlaylistTracks(
       playlistId
@@ -266,6 +283,10 @@ async function importPlaylist(
       seed
     );
 
+  // --------------------------------------------------
+  // Songs speichern
+  // --------------------------------------------------
+
   writeJson(
     SONGS_PATH,
     {
@@ -276,10 +297,24 @@ async function importPlaylist(
     }
   );
 
+  // --------------------------------------------------
+  // Playlist-Informationen speichern
+  // --------------------------------------------------
+
   writeJson(
     CONFIG_PATH,
     {
       playlistUrl,
+
+      playlistName:
+        playlistInfo.name,
+
+      playlistIconUrl:
+        playlistInfo.iconUrl,
+
+      playlistSongCount:
+        playlistInfo.songCount,
+
       lastImport:
         new Date().toISOString(),
     }
@@ -296,6 +331,15 @@ async function importPlaylist(
       unmatched.length,
 
     unmatched,
+
+    playlistName:
+      playlistInfo.name,
+
+    playlistIconUrl:
+      playlistInfo.iconUrl,
+
+    playlistSongCount:
+      playlistInfo.songCount,
   };
 }
 
