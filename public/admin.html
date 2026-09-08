@@ -1,226 +1,638 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin &mdash; Playlist verwalten</title>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <title>Admin — Song Guessr</title>
 
-<link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
 
-<style>
-  .admin-card {
-    max-width: 480px;
-    margin: 0 auto;
-  }
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
 
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
-    width: 100%;
-  }
+  <link rel="stylesheet" href="/css/style.css" />
 
-  .field label {
-    font-size: 13px;
-    color: var(--text-muted);
-  }
+  <style>
+    /* ==================================================
+       ADMIN PAGE
+       ================================================== */
 
-  .field input {
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #34364a;
-    background: var(--surface-raised);
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 13px;
-  }
+    body {
+      background:
+        radial-gradient(
+          circle at 50% -10%,
+          rgba(52, 224, 138, 0.08),
+          transparent 38%
+        ),
+        var(--bg);
+    }
 
-  .field input:focus {
-    outline: none;
-    border-color: var(--amber);
-  }
+    .page {
+      width: min(760px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 56px 0 80px;
+    }
 
-  .primary-btn {
-    width: 100%;
-    padding: 13px;
-    border-radius: 12px;
-    border: none;
-    background: var(--amber);
-    color: var(--bg);
-    font-family: var(--font-display);
-    font-weight: 500;
-    cursor: pointer;
-  }
+    /* --------------------------------------------------
+       Header
+       -------------------------------------------------- */
 
-  .primary-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
 
-  .status-box {
-    margin-top: 18px;
-    padding: 14px;
-    border-radius: 12px;
-    background: var(--surface-raised);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    white-space: pre-wrap;
-    display: none;
-  }
+    .admin-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
 
-  .status-box.visible {
-    display: block;
-  }
+    .wordmark {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
 
-  .meta {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-  }
+    .tagline {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
 
-  /* Spotify Verbindung */
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--pill-bg);
+      border: 1px solid #263029;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      white-space: nowrap;
+    }
 
-  .spotify-section {
-    margin-bottom: 24px;
-    padding: 16px;
-    border-radius: 12px;
-    background: var(--surface-raised);
-    border: 1px solid #34364a;
-  }
+    .admin-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(52, 224, 138, 0.5);
+    }
 
-  .spotify-title {
-    font-family: var(--font-display);
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
+    /* --------------------------------------------------
+       Main card
+       -------------------------------------------------- */
 
-  .spotify-description {
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--text-muted);
-    margin-bottom: 14px;
-  }
+    .admin-card {
+      width: 100%;
+      padding: 30px;
+      border-radius: 24px;
 
-  .spotify-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px 14px;
-    border-radius: 10px;
-    border: none;
-    background: #1ed760;
-    color: #000;
-    font-family: var(--font-display);
-    font-weight: 500;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-  }
+      background:
+        radial-gradient(
+          circle at 50% 0%,
+          #10241a 0%,
+          var(--surface) 52%
+        );
 
-  .spotify-btn:hover {
-    background: #1fdf64;
-  }
+      border: 1px solid #202a25;
+      box-shadow:
+        0 30px 100px rgba(0, 0, 0, 0.35);
+    }
 
-  .spotify-btn:active {
-    transform: scale(0.99);
-  }
+    /* --------------------------------------------------
+       Current status
+       -------------------------------------------------- */
 
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 22px 0;
-    color: var(--text-muted);
-    font-size: 11px;
-    font-family: var(--font-mono);
-  }
+    .current-status {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
 
-  .divider::before,
-  .divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: #34364a;
-  }
-</style>
+      padding: 18px;
+      margin-bottom: 24px;
+
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.018);
+      border: 1px solid #263029;
+    }
+
+    .status-heading {
+      margin: 0 0 5px;
+
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .current-info {
+      margin: 0;
+
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .status-indicator {
+      flex: 0 0 auto;
+
+      width: 9px;
+      height: 9px;
+      margin-top: 4px;
+
+      border-radius: 50%;
+      background: var(--green);
+
+      box-shadow:
+        0 0 0 4px rgba(52, 224, 138, 0.08),
+        0 0 16px rgba(52, 224, 138, 0.35);
+    }
+
+    /* --------------------------------------------------
+       Section labels
+       -------------------------------------------------- */
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      margin: 26px 0 14px;
+    }
+
+    .section-heading span {
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .section-heading::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #263029;
+    }
+
+    /* --------------------------------------------------
+       Spotify
+       -------------------------------------------------- */
+
+    .spotify-section {
+      padding: 18px;
+
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.018);
+      border: 1px solid #263029;
+    }
+
+    .spotify-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .spotify-copy {
+      min-width: 0;
+    }
+
+    .spotify-title {
+      margin: 0 0 5px;
+
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .spotify-description {
+      margin: 0;
+
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .spotify-mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+
+      border-radius: 11px;
+      background: #1ed760;
+      color: #06170e;
+
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    .spotify-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px 14px;
+
+      border-radius: 11px;
+      border: none;
+
+      background: #1ed760;
+      color: #06170e;
+
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.15s ease,
+        filter 0.15s ease;
+    }
+
+    .spotify-btn:hover {
+      filter: brightness(1.06);
+    }
+
+    .spotify-btn:active {
+      transform: scale(0.99);
+    }
+
+    /* --------------------------------------------------
+       Form
+       -------------------------------------------------- */
+
+    .admin-form {
+      width: 100%;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .field-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .field-hint {
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 13px 14px;
+
+      border-radius: 11px;
+      border: 1px solid #2a342f;
+      outline: none;
+
+      background: #0c1110;
+      color: var(--text);
+
+      font-family: var(--font-mono);
+      font-size: 13px;
+
+      transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+    }
+
+    .field input::placeholder {
+      color: #56615b;
+    }
+
+    .field input:focus {
+      border-color: var(--green);
+      background: #0e1412;
+
+      box-shadow:
+        0 0 0 3px rgba(52, 224, 138, 0.07);
+    }
+
+    .token-note {
+      margin: -4px 0 18px;
+
+      color: var(--text-muted);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    /* --------------------------------------------------
+       Import button
+       -------------------------------------------------- */
+
+    .primary-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      width: 100%;
+      padding: 14px;
+
+      border-radius: 12px;
+      border: none;
+
+      background: var(--green);
+      color: #06170e;
+
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.15s ease,
+        filter 0.15s ease;
+    }
+
+    .primary-btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .primary-btn:active {
+      transform: scale(0.99);
+    }
+
+    .primary-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* --------------------------------------------------
+       Result
+       -------------------------------------------------- */
+
+    .status-box {
+      margin-top: 18px;
+      padding: 16px;
+
+      border-radius: 14px;
+      border: 1px solid #263029;
+
+      background: #0b100e;
+
+      color: var(--text);
+
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.6;
+
+      white-space: pre-wrap;
+      overflow-x: auto;
+
+      display: none;
+    }
+
+    .status-box.visible {
+      display: block;
+    }
+
+    .status-box.success {
+      border-color: rgba(52, 224, 138, 0.35);
+    }
+
+    .status-box.error {
+      border-color: rgba(224, 100, 79, 0.4);
+    }
+
+    /* --------------------------------------------------
+       Mobile
+       -------------------------------------------------- */
+
+    @media (max-width: 600px) {
+      .page {
+        width: min(
+          100% - 24px,
+          760px
+        );
+
+        padding: 28px 0 50px;
+      }
+
+      .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .admin-card {
+        padding: 20px;
+        border-radius: 20px;
+      }
+
+      .current-status {
+        padding: 15px;
+      }
+
+      .spotify-top {
+        gap: 12px;
+      }
+
+      .admin-badge {
+        display: none;
+      }
+
+      .field-hint {
+        display: none;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
   <div class="page">
 
+    <!-- Header -->
+
     <header class="page-header">
-      <span class="wordmark">Admin</span>
-      <span class="tagline">Songauswahl fuer Tageslied verwalten</span>
+
+      <div class="admin-brand">
+        <span class="wordmark">
+          Song Guessr
+        </span>
+
+        <span class="tagline">
+          Playlist management
+        </span>
+      </div>
+
+      <div class="admin-badge">
+        <span class="admin-badge-dot"></span>
+        ADMIN PANEL
+      </div>
+
     </header>
 
-    <main class="game-card admin-card">
+    <!-- Main -->
 
-      <p class="meta" id="current-info">
-        Lade aktuellen Stand...
-      </p>
+    <main class="admin-card">
 
-      <!-- Spotify Verbindung -->
+      <!-- Current pool -->
 
-      <div class="spotify-section">
+      <div class="current-status">
 
-        <div class="spotify-title">
-          Spotify verbinden
+        <div>
+          <p class="status-heading">
+            Current pool
+          </p>
+
+          <p
+            class="current-info"
+            id="current-info"
+          >
+            Enter your admin token to view the current status.
+          </p>
         </div>
 
-        <div class="spotify-description">
-          Verbinde dein Spotify-Konto, damit die App auf deine
-          Spotify-Playlist zugreifen kann.
+        <div
+          class="status-indicator"
+          id="status-indicator"
+        ></div>
+
+      </div>
+
+      <!-- Spotify -->
+
+      <div class="section-heading">
+        <span>Spotify connection</span>
+      </div>
+
+      <section class="spotify-section">
+
+        <div class="spotify-top">
+
+          <div class="spotify-copy">
+
+            <p class="spotify-title">
+              Connect Spotify
+            </p>
+
+            <p class="spotify-description">
+              Connect your Spotify account to access and
+              import one of your playlists into the song pool.
+            </p>
+
+          </div>
+
+          <div class="spotify-mark">
+            ♪
+          </div>
+
         </div>
 
         <a
           href="/api/spotify/login"
           class="spotify-btn"
         >
-          Mit Spotify verbinden
+          Connect with Spotify
         </a>
 
+      </section>
+
+      <!-- Playlist import -->
+
+      <div class="section-heading">
+        <span>Playlist import</span>
       </div>
 
-      <div class="divider">
-        PLAYLIST IMPORT
-      </div>
-
-      <!-- Playlist Import -->
-
-      <form id="admin-form" style="width:100%">
+      <form
+        id="admin-form"
+        class="admin-form"
+      >
 
         <div class="field">
 
-          <label for="admin-token">
-            Admin-Token
-          </label>
+          <div class="field-header">
+
+            <label for="admin-token">
+              Admin token
+            </label>
+
+            <span class="field-hint">
+              SESSION ONLY
+            </span>
+
+          </div>
 
           <input
             type="password"
             id="admin-token"
-            placeholder="aus der .env Datei"
+            placeholder="Enter admin token"
+            autocomplete="off"
           />
 
         </div>
 
+        <p class="token-note">
+          Your token is kept only for this browser session
+          and is removed when the session ends.
+        </p>
+
         <div class="field">
 
-          <label for="playlist-url">
-            Spotify-Playlist-Link
-          </label>
+          <div class="field-header">
+
+            <label for="playlist-url">
+              Spotify playlist
+            </label>
+
+          </div>
 
           <input
             type="text"
             id="playlist-url"
             placeholder="https://open.spotify.com/playlist/..."
+            autocomplete="off"
           />
 
         </div>
@@ -230,7 +642,7 @@
           class="primary-btn"
           id="submit-btn"
         >
-          Playlist importieren
+          Import playlist
         </button>
 
       </form>
