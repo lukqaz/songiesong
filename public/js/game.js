@@ -31,36 +31,9 @@ const settingsPanel = document.getElementById("settings-panel");
 const settingsClose = document.getElementById("settings-close");
 const languageButtons = document.querySelectorAll("[data-language]");
 
-// Alle waehlbaren Ausschnittslaengen in Sekunden
-const STAGE_VALUES = [0.01, 0.1, 0.5, 2, 8, 15];
-
-const DIFFICULTIES = [
-  {
-    id: "easy",
-    label: "easy",
-    stages: [0.1, 0.5, 2, 8, 15],
-  },
-  {
-    id: "medium",
-    label: "medium",
-    stages: [0.1, 0.5, 2, 8],
-  },
-  {
-    id: "hard",
-    label: "hard",
-    stages: [0.01, 0.1, 0.5, 2],
-  },
-  {
-    id: "expert",
-    label: "expert",
-    stages: [0.01, 0.1, 0.5],
-  },
-  {
-    id: "impossible",
-    label: "impossible",
-    stages: [0.01, 0.1],
-  },
-];
+// --------------------------------------------------
+// Settings / Übersetzungen
+// --------------------------------------------------
 
 const translations = {
   en: {
@@ -92,9 +65,12 @@ const translations = {
     wrong: "Wrong",
     skipped: "Skipped",
     notice: "Notice",
-    noSongPool: "No songs available. Import a playlist in the admin panel first.",
-    roundExpired: "Round expired. Please start a new song.",
-    unavailable: "Game currently unavailable.",
+    noSongPool:
+      "No songs available. Import a playlist in the admin panel first.",
+    roundExpired:
+      "Round expired. Please start a new song.",
+    unavailable:
+      "Game currently unavailable.",
   },
 
   de: {
@@ -126,18 +102,59 @@ const translations = {
     wrong: "Falsch",
     skipped: "Übersprungen",
     notice: "Hinweis",
-    noSongPool: "Keine Songs verfügbar. Importiere zuerst eine Playlist im Admin-Bereich.",
-    roundExpired: "Runde abgelaufen. Bitte starte einen neuen Song.",
-    unavailable: "Das Spiel ist aktuell nicht verfügbar.",
+    noSongPool:
+      "Keine Songs verfügbar. Importiere zuerst eine Playlist im Admin-Bereich.",
+    roundExpired:
+      "Runde abgelaufen. Bitte starte einen neuen Song.",
+    unavailable:
+      "Das Spiel ist aktuell nicht verfügbar.",
   },
 };
 
 let currentLanguage =
   localStorage.getItem("songguessr_language") || "en";
 
+// --------------------------------------------------
+// Difficulty / Stages
+// --------------------------------------------------
+
+const STAGE_VALUES = [0.01, 0.1, 0.5, 2, 8, 15];
+
+const DIFFICULTIES = [
+  {
+    id: "easy",
+    label: "easy",
+    stages: [0.1, 0.5, 2, 8, 15],
+  },
+  {
+    id: "medium",
+    label: "medium",
+    stages: [0.1, 0.5, 2, 8],
+  },
+  {
+    id: "hard",
+    label: "hard",
+    stages: [0.01, 0.1, 0.5, 2],
+  },
+  {
+    id: "expert",
+    label: "expert",
+    stages: [0.01, 0.1, 0.5],
+  },
+  {
+    id: "impossible",
+    label: "impossible",
+    stages: [0.01, 0.1],
+  },
+];
+
 let activeStages = [...DIFFICULTIES[0].stages];
 let activeDifficultyId = "easy";
 let useHookStart = false;
+
+// --------------------------------------------------
+// Runde
+// --------------------------------------------------
 
 let round = {
   mode: "normal",
@@ -154,6 +171,10 @@ let round = {
 let playbackFrame = null;
 let loadingRound = false;
 
+// --------------------------------------------------
+// Übersetzungen
+// --------------------------------------------------
+
 function t(key) {
   return (
     translations[currentLanguage]?.[key] ??
@@ -165,9 +186,13 @@ function t(key) {
 function applyLanguage() {
   document.documentElement.lang = currentLanguage;
 
-  document.querySelectorAll("[data-i18n]").forEach((element) => {
-    element.textContent = t(element.dataset.i18n);
-  });
+  document
+    .querySelectorAll("[data-i18n]")
+    .forEach((element) => {
+      element.textContent = t(
+        element.dataset.i18n
+      );
+    });
 
   document
     .querySelectorAll("[data-i18n-placeholder]")
@@ -252,6 +277,7 @@ function renderDifficultyControls() {
     const label = t(difficulty.label);
 
     const sideBtn = document.createElement("button");
+
     sideBtn.className = "side-btn";
     sideBtn.textContent = label;
 
@@ -267,11 +293,14 @@ function renderDifficultyControls() {
     difficultyStack.appendChild(sideBtn);
 
     const pill = document.createElement("button");
+
     pill.className = "pill";
     pill.textContent = label;
 
     if (difficulty.id === activeDifficultyId) {
-      pill.classList.add(`active-${difficulty.id}`);
+      pill.classList.add(
+        `active-${difficulty.id}`
+      );
     }
 
     pill.addEventListener("click", () => {
@@ -300,7 +329,7 @@ function applyDifficulty(id) {
 }
 
 // --------------------------------------------------
-// Stage grid
+// Stage-Auswahl rechts
 // --------------------------------------------------
 
 function renderStageGrid() {
@@ -349,24 +378,108 @@ function toggleStage(value) {
 }
 
 // --------------------------------------------------
-// Stage track
+// NEUE STAGE BAR
 // --------------------------------------------------
 
 function renderStageTrack() {
   stageTrackEl.innerHTML = "";
 
-  activeStages.forEach((_, index) => {
-    const segment = document.createElement("div");
+  activeStages.forEach((seconds, index) => {
+    const wrapper =
+      document.createElement("div");
 
-    segment.className = "seg";
+    wrapper.className = "stage-segment";
 
     if (index < round.attempt) {
-      segment.classList.add("filled");
-    } else if (index === round.attempt) {
-      segment.classList.add("current");
+      wrapper.classList.add("completed");
     }
 
-    stageTrackEl.appendChild(segment);
+    if (index === round.attempt) {
+      wrapper.classList.add("current");
+    }
+
+    const bar =
+      document.createElement("div");
+
+    bar.className = "stage-bar";
+
+    const fill =
+      document.createElement("div");
+
+    fill.className = "stage-bar-fill";
+
+    fill.style.width = "0%";
+
+    const label =
+      document.createElement("span");
+
+    label.className = "stage-bar-label";
+    label.textContent = `${seconds}s`;
+
+    bar.appendChild(fill);
+
+    wrapper.appendChild(bar);
+    wrapper.appendChild(label);
+
+    stageTrackEl.appendChild(wrapper);
+  });
+}
+
+function updateStageProgress(progress) {
+  const segments =
+    stageTrackEl.querySelectorAll(
+      ".stage-segment"
+    );
+
+  segments.forEach((segment, index) => {
+    const fill =
+      segment.querySelector(
+        ".stage-bar-fill"
+      );
+
+    if (!fill) return;
+
+    if (index < round.attempt) {
+      fill.style.width = "100%";
+      return;
+    }
+
+    if (index === round.attempt) {
+      const percentage =
+        Math.max(
+          0,
+          Math.min(100, progress * 100)
+        );
+
+      fill.style.width =
+        `${percentage}%`;
+
+      return;
+    }
+
+    fill.style.width = "0%";
+  });
+}
+
+function resetCurrentStageProgress() {
+  const segments =
+    stageTrackEl.querySelectorAll(
+      ".stage-segment"
+    );
+
+  segments.forEach((segment, index) => {
+    const fill =
+      segment.querySelector(
+        ".stage-bar-fill"
+      );
+
+    if (!fill) return;
+
+    if (index < round.attempt) {
+      fill.style.width = "100%";
+    } else {
+      fill.style.width = "0%";
+    }
   });
 }
 
@@ -392,7 +505,8 @@ function renderAttempts() {
   attemptsRow.innerHTML = "";
 
   activeStages.forEach((_, index) => {
-    const dot = document.createElement("div");
+    const dot =
+      document.createElement("div");
 
     dot.className = "attempt-dot";
 
@@ -418,7 +532,8 @@ function renderHistory() {
   historyEl.innerHTML = "";
 
   round.history.forEach((entry) => {
-    const li = document.createElement("li");
+    const li =
+      document.createElement("li");
 
     li.className = entry.correct
       ? "correct"
@@ -430,7 +545,7 @@ function renderHistory() {
         ${
           entry.correct
             ? t("correct")
-            : entry.label === t("skipped")
+            : entry.skipped
               ? t("skipped")
               : t("wrong")
         }
@@ -442,18 +557,24 @@ function renderHistory() {
 }
 
 // --------------------------------------------------
-// Song start
+// Song Start
 // --------------------------------------------------
 
-startFromBeginBtn.addEventListener("click", () => {
-  setHookMode(false);
-});
+startFromBeginBtn.addEventListener(
+  "click",
+  () => {
+    setHookMode(false);
+  }
+);
 
-startFromHookBtn.addEventListener("click", () => {
-  if (!round.hookAvailable) return;
+startFromHookBtn.addEventListener(
+  "click",
+  () => {
+    if (!round.hookAvailable) return;
 
-  setHookMode(true);
-});
+    setHookMode(true);
+  }
+);
 
 function setHookMode(useHook) {
   useHookStart = useHook;
@@ -479,44 +600,46 @@ function refreshHookAvailability() {
 }
 
 // --------------------------------------------------
-// Volume
+// Lautstärke
 // --------------------------------------------------
 
 volumeSlider.addEventListener("input", () => {
-  const value = Number(volumeSlider.value);
+  const value =
+    Number(volumeSlider.value);
 
   audio.volume = value / 100;
-  volumeValue.textContent = `${value}%`;
+
+  volumeValue.textContent =
+    `${value}%`;
 });
 
 audio.volume = 1;
 
 // --------------------------------------------------
-// DAILY MODE — DISABLED
+// DAILY MODE — DEAKTIVIERT
 // --------------------------------------------------
-// Daily bleibt absichtlich im Code als Platzhalter erhalten.
-// Es wird aktuell NICHT aufgerufen und beeinflusst den
-// normalen Spielmodus nicht.
 //
-// Falls Daily spaeter wieder aktiviert werden soll, kann
-// hier wieder eine /today-Logik eingebaut werden.
+// Daily bleibt absichtlich als Code erhalten,
+// wird aber NICHT ausgeführt.
 //
-// Wichtig: Aktuell startet das Spiel immer mit loadRandom().
-// --------------------------------------------------
-
 // async function loadDaily() {
-//   // DISABLED — Daily currently unused.
-//   // Dieser Bereich macht absichtlich nichts.
+//   // Disabled
 // }
-
+//
 // function loadSavedDailyState(date) {
-//   // DISABLED — Daily currently unused.
+//   // Disabled
 //   return null;
 // }
-
+//
 // function persistDailyState(extra = {}) {
-//   // DISABLED — Daily currently unused.
+//   // Disabled
 // }
+//
+// Wichtig:
+// Es gibt aktuell KEINEN loadDaily()-Aufruf.
+// Das Spiel startet ausschließlich mit loadRandom().
+//
+// --------------------------------------------------
 
 // --------------------------------------------------
 // Normal / Random Mode
@@ -538,22 +661,25 @@ async function loadRandom() {
     );
 
     if (!res.ok) {
-      const error = await res
-        .json()
-        .catch(() => ({}));
+      const error =
+        await res.json()
+          .catch(() => ({}));
 
       showBlockingMessage(
-        error.error || t("noSongPool")
+        error.error ||
+          t("noSongPool")
       );
 
       return;
     }
 
-    const data = await res.json();
+    const data =
+      await res.json();
 
     applyRoundData(data);
 
-    round.roundId = data.roundId;
+    round.roundId =
+      data.roundId;
 
     renderAll();
 
@@ -575,18 +701,23 @@ async function loadRandom() {
 function applyRoundData(data) {
   stopSnippet();
 
-  audio.src = data.previewUrl || "";
+  audio.src =
+    data.previewUrl || "";
 
   round.mode = "normal";
-  round.roundId = data.roundId || null;
-  round.previewUrl = data.previewUrl || null;
+  round.roundId =
+    data.roundId || null;
 
-  round.hookAvailable = Boolean(
-    data.hookAvailable
-  );
+  round.previewUrl =
+    data.previewUrl || null;
+
+  round.hookAvailable =
+    Boolean(data.hookAvailable);
 
   round.hookOffsetSeconds =
-    Number(data.hookOffsetSeconds) || 0;
+    Number(
+      data.hookOffsetSeconds
+    ) || 0;
 
   round.attempt = 0;
   round.history = [];
@@ -599,21 +730,26 @@ function applyRoundData(data) {
   guessInput.value = "";
   suggestionsEl.innerHTML = "";
 
-  modeLabel.textContent = t("normal");
+  modeLabel.textContent =
+    t("normal");
 
   refreshHookAvailability();
 
-  playIcon.style.display = "block";
-  pauseIcon.style.display = "none";
+  playIcon.style.display =
+    "block";
+
+  pauseIcon.style.display =
+    "none";
 }
 
 function showBlockingMessage(text) {
   resultEl.hidden = false;
   guessForm.hidden = true;
 
-  const modal = resultEl.querySelector(
-    ".result-modal"
-  );
+  const modal =
+    resultEl.querySelector(
+      ".result-modal"
+    );
 
   if (modal) {
     modal.classList.remove(
@@ -622,33 +758,47 @@ function showBlockingMessage(text) {
     );
   }
 
-  resultStatus.textContent = t("notice");
-  resultSong.textContent = text;
+  resultStatus.textContent =
+    t("notice");
 
-  resultCover.removeAttribute("src");
-  resultLink.style.display = "none";
+  resultSong.textContent =
+    text;
+
+  resultCover.removeAttribute(
+    "src"
+  );
+
+  resultLink.style.display =
+    "none";
 }
 
-rerollBtn.addEventListener("click", () => {
-  loadRandom();
-});
+rerollBtn.addEventListener(
+  "click",
+  () => {
+    loadRandom();
+  }
+);
 
 // --------------------------------------------------
 // Playback
 // --------------------------------------------------
 
-playBtn.addEventListener("click", () => {
-  if (round.finished) return;
+playBtn.addEventListener(
+  "click",
+  () => {
+    if (round.finished) return;
 
-  if (audio.paused) {
-    playSnippet();
-  } else {
-    stopSnippet();
+    if (audio.paused) {
+      playSnippet();
+    } else {
+      stopSnippet();
+    }
   }
-});
+);
 
 function playSnippet() {
-  const seconds = currentStageSeconds();
+  const seconds =
+    currentStageSeconds();
 
   const startAt =
     useHookStart &&
@@ -658,8 +808,14 @@ function playSnippet() {
 
   cancelPlaybackLoop();
 
+  // Wichtig:
+  // Bei jedem neuen Play startet die Stage
+  // wieder bei 0.
+  resetCurrentStageProgress();
+
   try {
-    audio.currentTime = startAt;
+    audio.currentTime =
+      startAt;
   } catch {
     return;
   }
@@ -667,8 +823,11 @@ function playSnippet() {
   audio
     .play()
     .then(() => {
-      playIcon.style.display = "none";
-      pauseIcon.style.display = "block";
+      playIcon.style.display =
+        "none";
+
+      pauseIcon.style.display =
+        "block";
 
       const endTime =
         startAt + seconds;
@@ -679,11 +838,29 @@ function playSnippet() {
           return;
         }
 
+        const elapsed =
+          audio.currentTime -
+          startAt;
+
+        const progress =
+          Math.max(
+            0,
+            Math.min(
+              1,
+              elapsed / seconds
+            )
+          );
+
+        updateStageProgress(
+          progress
+        );
+
         if (
           audio.currentTime >=
           endTime
         ) {
-          stopSnippet();
+          updateStageProgress(1);
+          stopSnippet(false);
           return;
         }
 
@@ -713,13 +890,22 @@ function cancelPlaybackLoop() {
   }
 }
 
-function stopSnippet() {
+function stopSnippet(
+  resetProgress = true
+) {
   cancelPlaybackLoop();
 
   audio.pause();
 
-  playIcon.style.display = "block";
-  pauseIcon.style.display = "none";
+  playIcon.style.display =
+    "block";
+
+  pauseIcon.style.display =
+    "none";
+
+  if (resetProgress) {
+    resetCurrentStageProgress();
+  }
 }
 
 // --------------------------------------------------
@@ -728,49 +914,70 @@ function stopSnippet() {
 
 let suggestionTimer = null;
 
-guessInput.addEventListener("input", () => {
-  round.selectedSongId = null;
+guessInput.addEventListener(
+  "input",
+  () => {
+    round.selectedSongId =
+      null;
 
-  clearTimeout(suggestionTimer);
+    clearTimeout(
+      suggestionTimer
+    );
 
-  const query =
-    guessInput.value.trim();
+    const query =
+      guessInput.value
+        .trim();
 
-  if (query.length < 2) {
-    suggestionsEl.innerHTML = "";
-    return;
+    if (query.length < 2) {
+      suggestionsEl.innerHTML =
+        "";
+
+      return;
+    }
+
+    suggestionTimer =
+      setTimeout(
+        async () => {
+          try {
+            const res =
+              await fetch(
+                `/api/game/suggestions?q=${encodeURIComponent(
+                  query
+                )}`
+              );
+
+            const items =
+              await res.json();
+
+            renderSuggestions(
+              items
+            );
+          } catch (error) {
+            console.error(
+              "Autocomplete error:",
+              error
+            );
+
+            suggestionsEl.innerHTML =
+              "";
+          }
+        },
+        200
+      );
   }
+);
 
-  suggestionTimer = setTimeout(
-    async () => {
-      try {
-        const res = await fetch(
-          `/api/game/suggestions?q=${encodeURIComponent(query)}`
-        );
-
-        const items =
-          await res.json();
-
-        renderSuggestions(items);
-      } catch (error) {
-        console.error(
-          "Autocomplete error:",
-          error
-        );
-
-        suggestionsEl.innerHTML = "";
-      }
-    },
-    200
-  );
-});
-
-function renderSuggestions(items) {
-  suggestionsEl.innerHTML = "";
+function renderSuggestions(
+  items
+) {
+  suggestionsEl.innerHTML =
+    "";
 
   items.forEach((item) => {
     const li =
-      document.createElement("li");
+      document.createElement(
+        "li"
+      );
 
     li.className =
       "suggestion-item";
@@ -812,15 +1019,26 @@ function renderSuggestions(items) {
       }
     );
 
-    suggestionsEl.appendChild(li);
+    suggestionsEl.appendChild(
+      li
+    );
   });
 }
 
 function escapeHtml(value) {
   return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
     .replace(
       /"/g,
       "&quot;"
@@ -855,14 +1073,15 @@ skipBtn.addEventListener(
     if (!round.finished) {
       submitGuess(
         null,
-        t("skipped")
+        t("skipped"),
+        true
       );
     }
   }
 );
 
 // --------------------------------------------------
-// Guess
+// Guess Form
 // --------------------------------------------------
 
 guessForm.addEventListener(
@@ -876,7 +1095,8 @@ guessForm.addEventListener(
     ) {
       submitGuess(
         round.selectedSongId,
-        guessInput.value
+        guessInput.value,
+        false
       );
     }
   }
@@ -884,7 +1104,8 @@ guessForm.addEventListener(
 
 async function submitGuess(
   songId,
-  label
+  label,
+  skipped = false
 ) {
   if (round.finished) return;
 
@@ -901,9 +1122,6 @@ async function submitGuess(
   try {
     audio.currentTime = 0;
   } catch {}
-
-  playIcon.style.display = "block";
-  pauseIcon.style.display = "none";
 
   const attemptNumber =
     round.attempt + 1;
@@ -940,9 +1158,8 @@ async function submitGuess(
   }
 
   const data =
-    await res.json().catch(
-      () => ({})
-    );
+    await res.json()
+      .catch(() => ({}));
 
   if (!res.ok) {
     showBlockingMessage(
@@ -955,16 +1172,18 @@ async function submitGuess(
 
   round.history.push({
     label,
-    correct: Boolean(
-      data.correct
-    ),
+    correct:
+      Boolean(data.correct),
+    skipped,
   });
 
   round.attempt =
     attemptNumber;
 
+  round.selectedSongId =
+    null;
+
   guessInput.value = "";
-  round.selectedSongId = null;
 
   const gameOver =
     Boolean(data.correct) ||
@@ -1036,7 +1255,6 @@ function showResult(
   resultLink.href =
     reveal.spotifyUrl || "#";
 
-  // Ergebnis-Song komplett abspielen
   stopSnippet();
 
   try {
@@ -1045,13 +1263,15 @@ function showResult(
 
   audio.play().catch(() => {});
 
-  playIcon.style.display = "none";
+  playIcon.style.display =
+    "none";
+
   pauseIcon.style.display =
     "block";
 }
 
 // --------------------------------------------------
-// Close result -> automatically load new song
+// Result schließen -> direkt neuer Song
 // --------------------------------------------------
 
 resultClose.addEventListener(
@@ -1071,7 +1291,7 @@ resultClose.addEventListener(
 );
 
 // --------------------------------------------------
-// Alles rendern
+// Render
 // --------------------------------------------------
 
 function renderAll() {
@@ -1087,6 +1307,6 @@ function renderAll() {
 applyLanguage();
 renderAll();
 
-// Normal mode is active.
-// Daily is intentionally disabled above.
+// Daily bleibt deaktiviert.
+// Normal startet automatisch.
 loadRandom();
