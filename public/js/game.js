@@ -358,6 +358,15 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".input-wrap")) suggestionsEl.innerHTML = "";
 });
