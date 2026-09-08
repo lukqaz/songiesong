@@ -26,10 +26,35 @@ const volumeValue = document.getElementById("volume-value");
 const startFromBeginBtn = document.getElementById("start-from-begin");
 const startFromHookBtn = document.getElementById("start-from-hook");
 
-const settingsBtn = document.getElementById("settings-btn");
-const settingsPanel = document.getElementById("settings-panel");
-const settingsClose = document.getElementById("settings-close");
-const languageButtons = document.querySelectorAll("[data-language]");
+// Playlist indicator
+const playlistIndicator =
+  document.getElementById("playlist-indicator");
+
+const playlistIcon =
+  document.getElementById("playlist-icon");
+
+const playlistIconPlaceholder =
+  document.getElementById(
+    "playlist-icon-placeholder"
+  );
+
+const playlistName =
+  document.getElementById("playlist-name");
+
+const playlistCount =
+  document.getElementById("playlist-count");
+
+const settingsBtn =
+  document.getElementById("settings-btn");
+
+const settingsPanel =
+  document.getElementById("settings-panel");
+
+const settingsClose =
+  document.getElementById("settings-close");
+
+const languageButtons =
+  document.querySelectorAll("[data-language]");
 
 // --------------------------------------------------
 // Settings / Übersetzungen
@@ -200,9 +225,12 @@ let round = {
   // Spotify Preview
   spotifyPreviewUrl: null,
 
-  // Legacy-Felder bleiben erhalten,
-  // werden aber nicht mehr fuer die
-  // Main-Hook-Auswahl benoetigt.
+  // Playlist
+  playlistName: null,
+  playlistIconUrl: null,
+  playlistSongCount: null,
+
+  // Legacy-Felder
   hookAvailable: false,
   hookOffsetSeconds: 0,
 
@@ -300,6 +328,64 @@ function setLanguage(language) {
   );
 
   applyLanguage();
+}
+
+// --------------------------------------------------
+// Playlist Indicator
+// --------------------------------------------------
+
+function updatePlaylistIndicator(data) {
+  if (!playlistIndicator) {
+    return;
+  }
+
+  const name =
+    data.playlistName ||
+    "Playlist";
+
+  const count =
+    Number(data.playlistSongCount);
+
+  playlistName.textContent =
+    name;
+
+  if (
+    Number.isFinite(count) &&
+    count > 0
+  ) {
+    playlistCount.textContent =
+      `${count} ${count === 1 ? "song" : "songs"}`;
+  } else {
+    playlistCount.textContent =
+      "Song Guessr";
+  }
+
+  const iconUrl =
+    data.playlistIconUrl || "";
+
+  if (iconUrl) {
+    playlistIcon.src =
+      iconUrl;
+
+    playlistIcon.hidden =
+      false;
+
+    playlistIconPlaceholder.hidden =
+      true;
+  } else {
+    playlistIcon.removeAttribute(
+      "src"
+    );
+
+    playlistIcon.hidden =
+      true;
+
+    playlistIconPlaceholder.hidden =
+      false;
+  }
+
+  playlistIndicator.hidden =
+    false;
 }
 
 // --------------------------------------------------
@@ -809,12 +895,6 @@ function getActivePreviewUrl() {
   );
 }
 
-// Beide Quellen starten bei 0.
-//
-// Spotify Preview = bereits ein
-// eigener kurzer Preview-Ausschnitt.
-// Deezer = Fallback bzw.
-// "From beginning".
 function getPlaybackStartTime() {
   return 0;
 }
@@ -875,35 +955,55 @@ function renderAttempts() {
 function renderHistory() {
   historyEl.innerHTML = "";
 
-  round.history.forEach((entry, index) => {
-    const li = document.createElement("li");
+  round.history.forEach(
+    (entry, index) => {
+      const li =
+        document.createElement(
+          "li"
+        );
 
-    li.className = entry.correct
-      ? "correct"
-      : "wrong";
+      li.className =
+        entry.correct
+          ? "correct"
+          : "wrong";
 
-    const stageSeconds =
-      activeStages[index] ?? currentStageSeconds();
+      const stageSeconds =
+        activeStages[index] ??
+        currentStageSeconds();
 
-    const leftLabel = `${stageSeconds}s`;
+      const leftLabel =
+        `${stageSeconds}s`;
 
-    let rightLabel;
+      let rightLabel;
 
-    if (entry.correct) {
-      rightLabel = t("correct");
-    } else if (entry.skipped) {
-      rightLabel = t("skipped");
-    } else {
-      rightLabel = t("wrong");
+      if (entry.correct) {
+        rightLabel =
+          t("correct");
+      } else if (
+        entry.skipped
+      ) {
+        rightLabel =
+          t("skipped");
+      } else {
+        rightLabel =
+          t("wrong");
+      }
+
+      li.innerHTML = `
+        <span>
+          ${escapeHtml(leftLabel)}
+        </span>
+
+        <span>
+          ${escapeHtml(rightLabel)}
+        </span>
+      `;
+
+      historyEl.appendChild(
+        li
+      );
     }
-
-    li.innerHTML = `
-      <span>${escapeHtml(leftLabel)}</span>
-      <span>${escapeHtml(rightLabel)}</span>
-    `;
-
-    historyEl.appendChild(li);
-  });
+  );
 }
 
 // --------------------------------------------------
@@ -928,9 +1028,6 @@ function setHookMode(useHook) {
   useHookStart =
     useHook;
 
-  // Beim Wechsel zwischen
-  // Deezer und Spotify Preview
-  // Playback komplett neu starten.
   resetPlaybackState();
 
   audio.src =
@@ -952,11 +1049,6 @@ function setHookMode(useHook) {
 }
 
 function refreshHookAvailability() {
-  // Main Hook bleibt IMMER auswählbar.
-  //
-  // Falls keine Spotify Preview existiert,
-  // wird intern automatisch Deezer ab 0:00
-  // verwendet.
   startFromHookBtn.disabled =
     false;
 }
@@ -987,25 +1079,7 @@ audio.volume = 1;
 // DAILY MODE — DEAKTIVIERT
 // --------------------------------------------------
 //
-// Daily bleibt absichtlich als Code erhalten,
-// wird aber NICHT ausgeführt.
-//
-// async function loadDaily() {
-//   // Disabled
-// }
-//
-// function loadSavedDailyState(date) {
-//   // Disabled
-//   return null;
-// }
-//
-// function persistDailyState(extra = {}) {
-//   // Disabled
-// }
-//
-// Wichtig:
-// Es gibt aktuell KEINEN loadDaily()-Aufruf.
-// Das Spiel startet ausschließlich mit loadRandom().
+// Daily bleibt absichtlich deaktiviert.
 //
 // --------------------------------------------------
 
@@ -1082,18 +1156,34 @@ function applyRoundData(data) {
   round.roundId =
     data.roundId || null;
 
-  // Deezer Preview
+  // Deezer
   round.previewUrl =
     data.previewUrl || null;
 
-  // Spotify Preview
+  // Spotify
   round.spotifyPreviewUrl =
     data.spotifyPreviewUrl ||
     null;
 
-  // Legacy-Werte werden weiterhin
-  // akzeptiert, aber nicht mehr
-  // fuer die Audioquelle verwendet.
+  // Playlist
+  round.playlistName =
+    data.playlistName ||
+    null;
+
+  round.playlistIconUrl =
+    data.playlistIconUrl ||
+    null;
+
+  round.playlistSongCount =
+    Number(
+      data.playlistSongCount
+    ) || null;
+
+  updatePlaylistIndicator(
+    data
+  );
+
+  // Legacy
   round.hookAvailable =
     Boolean(
       data.spotifyPreviewUrl
@@ -1110,16 +1200,6 @@ function applyRoundData(data) {
   round.selectedSongId =
     null;
 
-  // Wichtig:
-  // Wenn der Spieler bereits Main Hook
-  // ausgewählt hatte, bleibt diese
-  // Auswahl auch beim neuen Song erhalten.
-  //
-  // Hat der neue Song eine Spotify Preview:
-  // -> Spotify
-  //
-  // Hat er keine:
-  // -> Deezer ab 0:00
   audio.src =
     getActivePreviewUrl();
 
@@ -1269,7 +1349,8 @@ function playSnippet() {
           pausedAt =
             audio.currentTime;
 
-          playbackFrame = null;
+          playbackFrame =
+            null;
 
           updateStageProgress(
             currentStageProgress()
@@ -1457,13 +1538,6 @@ function renderSuggestions(
 ) {
   suggestionsEl.innerHTML =
     "";
-
-  // Alle Ergebnisse vom Server
-  // werden angezeigt.
-  //
-  // Das sichtbare Fenster wird
-  // ueber CSS begrenzt und bekommt
-  // einen Scrollbalken.
 
   items.forEach(
     (item) => {
@@ -1828,10 +1902,6 @@ function renderAll() {
   updateStageTime();
   refreshHookAvailability();
 
-  // Falls der Modus bereits auf
-  // Main Hook steht, sicherstellen,
-  // dass die aktuelle Audioquelle
-  // zum aktuellen Song passt.
   audio.src =
     getActivePreviewUrl();
 }
