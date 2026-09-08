@@ -69,6 +69,7 @@ body {
 
 .sidebar-left {
   position: relative;
+  min-height: 520px;
 }
 
 .pill-stack {
@@ -104,12 +105,15 @@ body {
 /* --- Settings button + panel --- */
 
 .settings-btn {
-  margin-bottom: 2px;
+  order: 10;
+  margin-top: auto;
+  margin-bottom: 0;
 }
 
 .settings-panel {
   position: absolute;
-  top: 52px;
+  bottom: 52px;
+  top: auto;
   left: 0;
   width: 260px;
   z-index: 50;
@@ -495,18 +499,41 @@ body {
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-
   background: var(--surface-raised);
   border-radius: 12px;
-
   list-style: none;
   margin: 0;
   padding: 4px;
 
-  max-height: 220px;
+  /* Clean scrolling */
+  max-height: 380px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a4a41 transparent;
 
   z-index: 5;
+}
+
+/* Chrome / Edge / Chromium */
+.suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.suggestions::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.suggestions::-webkit-scrollbar-thumb {
+  background: #3a4a41;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.suggestions::-webkit-scrollbar-thumb:hover {
+  background: #52645a;
+  background-clip: padding-box;
 }
 
 .suggestions:empty {
