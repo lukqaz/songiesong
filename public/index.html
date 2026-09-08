@@ -4,11 +4,18 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Song Guessr &mdash; Guess the song</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+
 <link rel="stylesheet" href="/css/style.css" />
 </head>
+
 <body>
 
   <div class="layout">
@@ -27,6 +34,7 @@
       </button>
 
       <div class="settings-panel" id="settings-panel" hidden>
+
         <div class="settings-panel-header">
           <span data-i18n="settings">Settings</span>
 
@@ -42,9 +50,16 @@
         </div>
 
         <div class="language-setting">
-          <p class="setting-label" data-i18n="language">Language</p>
+
+          <p
+            class="setting-label"
+            data-i18n="language"
+          >
+            Language
+          </p>
 
           <div class="language-buttons">
+
             <button
               type="button"
               class="language-btn"
@@ -60,46 +75,97 @@
             >
               Deutsch
             </button>
+
           </div>
+
         </div>
+
       </div>
 
-      <div class="pill-stack" id="difficulty-stack"></div>
+      <div
+        class="pill-stack"
+        id="difficulty-stack"
+      ></div>
 
-      <button class="side-btn" id="reroll-btn">
-        &#8635; <span data-i18n="newSong">New Song</span>
+      <button
+        class="side-btn"
+        id="reroll-btn"
+      >
+        &#8635;
+        <span data-i18n="newSong">
+          New Song
+        </span>
       </button>
 
-      <button class="side-btn" id="filters-btn">
-        &#9881; <span data-i18n="filter">Filter</span>
+      <button
+        class="side-btn"
+        id="filters-btn"
+      >
+        &#9881;
+        <span data-i18n="filter">
+          Filter
+        </span>
       </button>
 
-      <button class="side-btn" id="feedback-btn">
-        &#128172; <span data-i18n="feedback">Feedback</span>
+      <button
+        class="side-btn"
+        id="feedback-btn"
+      >
+        &#128172;
+        <span data-i18n="feedback">
+          Feedback
+        </span>
       </button>
 
     </aside>
+
 
     <!-- Center: player -->
     <main class="board">
 
       <header class="board-header">
-        <span class="wordmark">Song Guessr</span>
-        <span class="mode-label" id="mode-label" data-i18n="normal">Normal</span>
+
+        <span class="wordmark">
+          Song Guessr
+        </span>
+
+        <span
+          class="mode-label"
+          id="mode-label"
+          data-i18n="normal"
+        >
+          Normal
+        </span>
+
       </header>
 
-      <div class="pill-row" id="difficulty-pills"></div>
 
-      <div class="stage-track" id="stage-track"></div>
+      <div
+        class="pill-row"
+        id="difficulty-pills"
+      ></div>
+
+
+      <div
+        class="stage-track"
+        id="stage-track"
+      ></div>
+
 
       <div class="player">
+
         <button
           class="play-btn"
           id="play-btn"
           aria-label="Play snippet"
           data-i18n-aria-label="playSnippet"
         >
-          <svg id="play-icon" viewBox="0 0 24 24" fill="none">
+
+          <svg
+            id="play-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
             <path
               d="M5 2v20l17-10L5 2z"
               fill="currentColor"
@@ -112,18 +178,49 @@
             fill="none"
             style="display:none"
           >
-            <rect x="6" y="5" width="4" height="14" fill="currentColor"/>
-            <rect x="14" y="5" width="4" height="14" fill="currentColor"/>
+            <rect
+              x="6"
+              y="5"
+              width="4"
+              height="14"
+              fill="currentColor"
+            />
+
+            <rect
+              x="14"
+              y="5"
+              width="4"
+              height="14"
+              fill="currentColor"
+            />
           </svg>
+
         </button>
 
-        <span class="stage-time" id="stage-time">0.1s</span>
+        <span
+          class="stage-time"
+          id="stage-time"
+        >
+          0.1s
+        </span>
+
       </div>
 
-      <div class="attempts" id="attempts-row"></div>
 
-      <form class="guess-form" id="guess-form" autocomplete="off">
+      <div
+        class="attempts"
+        id="attempts-row"
+      ></div>
+
+
+      <form
+        class="guess-form"
+        id="guess-form"
+        autocomplete="off"
+      >
+
         <div class="input-wrap">
+
           <input
             type="text"
             id="guess-input"
@@ -133,20 +230,41 @@
             data-i18n-aria-label="guessSong"
           />
 
-          <ul class="suggestions" id="suggestions"></ul>
+          <ul
+            class="suggestions"
+            id="suggestions"
+          ></ul>
+
         </div>
 
-        <button type="button" class="skip-btn" id="skip-btn">
-          &#9199; <span data-i18n="skip">Skip</span>
+        <button
+          type="button"
+          class="skip-btn"
+          id="skip-btn"
+        >
+          &#9199;
+          <span data-i18n="skip">
+            Skip
+          </span>
         </button>
+
       </form>
 
-      <ul class="guess-history" id="guess-history"></ul>
+
+      <ul
+        class="guess-history"
+        id="guess-history"
+      ></ul>
+
 
       <!-- Playlist indicator -->
-      <div class="playlist-indicator" id="playlist-indicator">
+      <div
+        class="playlist-indicator"
+        id="playlist-indicator"
+      >
 
         <div class="playlist-icon-wrap">
+
           <img
             id="playlist-icon"
             class="playlist-icon"
@@ -161,9 +279,11 @@
           >
             &#9835;
           </span>
+
         </div>
 
         <div class="playlist-info">
+
           <div
             class="playlist-name"
             id="playlist-name"
@@ -177,12 +297,19 @@
           >
             Song Guessr
           </div>
+
         </div>
 
       </div>
 
+
       <!-- Result -->
-      <div class="result-overlay" id="result" hidden>
+      <div
+        class="result-overlay"
+        id="result"
+        hidden
+      >
+
         <div class="result-modal">
 
           <button
@@ -194,7 +321,10 @@
             &times;
           </button>
 
-          <p class="result-status" id="result-status"></p>
+          <p
+            class="result-status"
+            id="result-status"
+          ></p>
 
           <img
             id="result-cover"
@@ -202,7 +332,10 @@
             alt=""
           />
 
-          <h2 class="result-song" id="result-song"></h2>
+          <h2
+            class="result-song"
+            id="result-song"
+          ></h2>
 
           <a
             id="result-link"
@@ -216,15 +349,23 @@
           </a>
 
         </div>
+
       </div>
 
     </main>
 
-    <!-- Right sidebar: game settings -->
+
+    <!-- Right sidebar -->
     <aside class="sidebar sidebar-right">
 
       <section class="setting-group">
-        <p class="setting-label" data-i18n="songStart">Song Start</p>
+
+        <p
+          class="setting-label"
+          data-i18n="songStart"
+        >
+          Song Start
+        </p>
 
         <button
           class="wide-toggle active"
@@ -242,16 +383,37 @@
         >
           Main Hook
         </button>
+
       </section>
 
-      <section class="setting-group">
-        <p class="setting-label" data-i18n="stages">Stages</p>
-        <div class="stage-grid" id="stage-grid"></div>
-      </section>
 
       <section class="setting-group">
-        <p class="setting-label" data-i18n="volume">
-          Volume <span id="volume-value">100%</span>
+
+        <p
+          class="setting-label"
+          data-i18n="stages"
+        >
+          Stages
+        </p>
+
+        <div
+          class="stage-grid"
+          id="stage-grid"
+        ></div>
+
+      </section>
+
+
+      <section class="setting-group">
+
+        <p
+          class="setting-label"
+          data-i18n="volume"
+        >
+          Volume
+          <span id="volume-value">
+            100%
+          </span>
         </p>
 
         <input
@@ -261,14 +423,70 @@
           max="100"
           value="100"
         />
+
       </section>
 
     </aside>
 
   </div>
 
-  <audio id="audio" preload="auto"></audio>
+
+  <audio
+    id="audio"
+    preload="auto"
+  ></audio>
+
+
+  <!-- Freaky / Romance Mode -->
+
+  <button
+    class="freaky-mode-btn"
+    id="freaky-mode-btn"
+    type="button"
+  >
+
+    <span class="freaky-icon">
+      😈
+    </span>
+
+    <span class="freaky-text">
+
+      <span class="freaky-title">
+        FREAKY MODE
+      </span>
+
+      <span class="freaky-subtitle">
+        enter the romance
+      </span>
+
+    </span>
+
+  </button>
+
+
+  <div
+    class="romance-banner"
+    id="romance-banner"
+  >
+
+    <span>♡</span>
+
+    <strong>
+      ROMANCE ACTIVE
+    </strong>
+
+    <span>♡</span>
+
+  </div>
+
+
+  <div
+    class="romance-hearts"
+    id="romance-hearts"
+  ></div>
+
 
   <script src="/js/game.js"></script>
+
 </body>
 </html>
