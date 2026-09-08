@@ -3,8 +3,16 @@ const { loadPool } = require("../songPool");
 
 const router = express.Router();
 
-// Alle waehlbaren Ausschnittslaengen in Sekunden
-const STAGE_VALUES = [0.01, 0.1, 0.5, 2, 8, 15];
+// Alle waehlbaren Ausschnittslaengen
+// in Sekunden
+const STAGE_VALUES = [
+  0.01,
+  0.1,
+  0.5,
+  2,
+  8,
+  15,
+];
 
 /*
  * ==================================================
@@ -53,8 +61,8 @@ const STAGE_VALUES = [0.01, 0.1, 0.5, 2, 8, 15];
 // Normal game rounds
 // --------------------------------------------------
 
-// Speichert serverseitig, welcher Song zu welcher
-// Runde gehoert.
+// Speichert serverseitig, welcher Song
+// zu welcher Runde gehoert.
 const normalRounds = new Map();
 
 const ROUND_TTL_MS =
@@ -119,20 +127,22 @@ router.get(
 
     res.json({
       mode: "normal",
+
       roundId,
 
+      // Deezer:
+      // wird immer fuer "From beginning"
+      // verwendet und dient als Fallback.
       previewUrl:
-        song.previewUrl,
+        song.previewUrl || null,
 
-      hookAvailable:
-        Boolean(
-          song.hookStartMs
-        ),
-
-      hookOffsetSeconds:
-        song.hookStartMs
-          ? song.hookStartMs / 1000
-          : 0,
+      // Spotify:
+      // wird nur verwendet, wenn
+      // "Main Hook" ausgewaehlt ist
+      // und eine Preview existiert.
+      spotifyPreviewUrl:
+        song.spotifyPreviewUrl ||
+        null,
 
       stageValues:
         STAGE_VALUES,
@@ -169,18 +179,18 @@ router.get(
       return res.json([]);
     }
 
+    // Kein kuenstliches Limit mehr.
+    // Alle passenden Songs werden zurueckgegeben.
     const results =
-      list
-        .filter(
-          (song) =>
-            song.title
-              .toLowerCase()
-              .includes(query) ||
-            song.artist
-              .toLowerCase()
-              .includes(query)
-        )
-        .slice(0, 8);
+      list.filter(
+        (song) =>
+          song.title
+            .toLowerCase()
+            .includes(query) ||
+          song.artist
+            .toLowerCase()
+            .includes(query)
+      );
 
     res.json(results);
   }
@@ -208,7 +218,8 @@ router.post(
     /*
      * Normal mode always requires a roundId.
      *
-     * There is intentionally NO fallback to Daily here.
+     * There is intentionally NO fallback
+     * to Daily here.
      */
     if (
       !roundId ||
@@ -261,10 +272,15 @@ router.post(
       isLastAttempt
     ) {
       response.reveal = {
-        title: answer.title,
-        artist: answer.artist,
+        title:
+          answer.title,
+
+        artist:
+          answer.artist,
+
         coverUrl:
           answer.coverUrl,
+
         spotifyUrl:
           answer.spotifyUrl,
       };
