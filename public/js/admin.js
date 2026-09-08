@@ -19,21 +19,22 @@ const currentInfo =
 const statusIndicator =
   document.getElementById("status-indicator");
 
+const spotifyBtn =
+  document.querySelector(".spotify-btn");
+
+const spotifyTitle =
+  document.querySelector(".spotify-title");
+
+const spotifyDescription =
+  document.querySelector(
+    ".spotify-description"
+  );
+
 const TOKEN_KEY =
   "tageslied_admin_token";
 
 // --------------------------------------------------
 // Session Token
-// --------------------------------------------------
-//
-// Der Token wird absichtlich NICHT mehr in
-// localStorage gespeichert.
-//
-// sessionStorage:
-// - bleibt bei Navigation innerhalb der Session
-// - bleibt beim normalen Reload erhalten
-// - wird beim Ende der Browser-Session entfernt
-//
 // --------------------------------------------------
 
 tokenInput.value =
@@ -99,6 +100,50 @@ function showStatus(
 }
 
 // --------------------------------------------------
+// Spotify connection UI
+// --------------------------------------------------
+
+function setSpotifyStatus(
+  connected
+) {
+  if (
+    !spotifyBtn ||
+    !spotifyTitle ||
+    !spotifyDescription
+  ) {
+    return;
+  }
+
+  if (connected) {
+    spotifyBtn.textContent =
+      "Spotify Connected";
+
+    spotifyBtn.classList.add(
+      "spotify-connected"
+    );
+
+    spotifyTitle.textContent =
+      "Spotify Connected";
+
+    spotifyDescription.textContent =
+      "Your Spotify account is connected. You can now import playlists into the song pool.";
+  } else {
+    spotifyBtn.textContent =
+      "Connect with Spotify";
+
+    spotifyBtn.classList.remove(
+      "spotify-connected"
+    );
+
+    spotifyTitle.textContent =
+      "Connect Spotify";
+
+    spotifyDescription.textContent =
+      "Connect your Spotify account to access and import one of your playlists into the song pool.";
+  }
+}
+
+// --------------------------------------------------
 // Current status
 // --------------------------------------------------
 
@@ -111,6 +156,8 @@ async function loadStatus() {
       "Enter your admin token to view the current status.";
 
     setStatusIndicator(false);
+
+    setSpotifyStatus(false);
 
     return;
   }
@@ -134,6 +181,8 @@ async function loadStatus() {
 
       setStatusIndicator(false);
 
+      setSpotifyStatus(false);
+
       return;
     }
 
@@ -141,6 +190,12 @@ async function loadStatus() {
       await res.json();
 
     setStatusIndicator(true);
+
+    setSpotifyStatus(
+      Boolean(
+        data.spotifyConnected
+      )
+    );
 
     if (data.playlistUrl) {
       const lastImport =
@@ -173,6 +228,8 @@ async function loadStatus() {
       "Server unreachable.";
 
     setStatusIndicator(false);
+
+    setSpotifyStatus(false);
   }
 }
 
@@ -333,5 +390,7 @@ form.addEventListener(
 // --------------------------------------------------
 // Start
 // --------------------------------------------------
+
+setSpotifyStatus(false);
 
 loadStatus();
