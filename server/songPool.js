@@ -3,8 +3,13 @@ const path = require("path");
 const { extractPlaylistId, fetchPlaylistTracks } = require("./spotify");
 const { findBestMatch } = require("./deezer");
 
-const SONGS_PATH = path.join(__dirname, "..", "data", "songs.json");
-const CONFIG_PATH = path.join(__dirname, "..", "data", "config.json");
+const DATA_DIR = path.join(__dirname, "..", "data");
+const SONGS_PATH = path.join(DATA_DIR, "songs.json");
+const CONFIG_PATH = path.join(DATA_DIR, "config.json");
+
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 function readJson(filePath, fallback) {
   try {
