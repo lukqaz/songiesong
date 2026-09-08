@@ -1,84 +1,337 @@
-const form = document.getElementById("admin-form");
-const tokenInput = document.getElementById("admin-token");
-const urlInput = document.getElementById("playlist-url");
-const submitBtn = document.getElementById("submit-btn");
-const statusBox = document.getElementById("status-box");
-const currentInfo = document.getElementById("current-info");
+const form =
+  document.getElementById("admin-form");
 
-const TOKEN_KEY = "tageslied_admin_token";
+const tokenInput =
+  document.getElementById("admin-token");
 
-tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
+const urlInput =
+  document.getElementById("playlist-url");
 
-async function loadStatus() {
-  const token = tokenInput.value.trim();
-  if (!token) {
-    currentInfo.textContent = "Admin-Token eingeben, um den aktuellen Stand zu sehen.";
-    return;
-  }
-  try {
-    const res = await fetch("/api/admin/status", {
-      headers: { "x-admin-token": token },
-    });
-    if (!res.ok) {
-      currentInfo.textContent = "Token ungueltig oder noch kein Import erfolgt.";
-      return;
-    }
-    const data = await res.json();
-    currentInfo.textContent = data.playlistUrl
-      ? `Aktuelle Playlist: ${data.playlistUrl}\n${data.songCount} Songs im Pool \u00b7 letzter Import: ${new Date(data.lastImport).toLocaleString("de-DE")}`
-      : "Noch keine Playlist importiert.";
-    if (data.playlistUrl) urlInput.value = data.playlistUrl;
-  } catch {
-    currentInfo.textContent = "Server nicht erreichbar.";
+const submitBtn =
+  document.getElementById("submit-btn");
+
+const statusBox =
+  document.getElementById("status-box");
+
+const currentInfo =
+  document.getElementById("current-info");
+
+const statusIndicator =
+  document.getElementById("status-indicator");
+
+const TOKEN_KEY =
+  "tageslied_admin_token";
+
+// --------------------------------------------------
+// Session Token
+// --------------------------------------------------
+//
+// Der Token wird absichtlich NICHT mehr in
+// localStorage gespeichert.
+//
+// sessionStorage:
+// - bleibt bei Navigation innerhalb der Session
+// - bleibt beim normalen Reload erhalten
+// - wird beim Ende der Browser-Session entfernt
+//
+// --------------------------------------------------
+
+tokenInput.value =
+  sessionStorage.getItem(TOKEN_KEY) || "";
+
+// --------------------------------------------------
+// Helpers
+// --------------------------------------------------
+
+function saveToken() {
+  const token =
+    tokenInput.value.trim();
+
+  if (token) {
+    sessionStorage.setItem(
+      TOKEN_KEY,
+      token
+    );
+  } else {
+    sessionStorage.removeItem(
+      TOKEN_KEY
+    );
   }
 }
 
-tokenInput.addEventListener("change", () => {
-  localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
-  loadStatus();
-});
+function setStatusIndicator(
+  active
+) {
+  if (!statusIndicator) return;
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const token = tokenInput.value.trim();
-  const playlistUrl = urlInput.value.trim();
-  if (!token || !playlistUrl) return;
+  statusIndicator.style.background =
+    active
+      ? "var(--green)"
+      : "var(--text-muted)";
 
-  localStorage.setItem(TOKEN_KEY, token);
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Importiere... das kann eine Weile dauern";
-  statusBox.classList.remove("visible");
+  statusIndicator.style.boxShadow =
+    active
+      ? "0 0 0 4px rgba(52, 224, 138, 0.08), 0 0 16px rgba(52, 224, 138, 0.35)"
+      : "none";
+}
+
+function showStatus(
+  text,
+  type = ""
+) {
+  statusBox.textContent =
+    text;
+
+  statusBox.classList.add(
+    "visible"
+  );
+
+  statusBox.classList.remove(
+    "success",
+    "error"
+  );
+
+  if (type) {
+    statusBox.classList.add(
+      type
+    );
+  }
+}
+
+// --------------------------------------------------
+// Current status
+// --------------------------------------------------
+
+async function loadStatus() {
+  const token =
+    tokenInput.value.trim();
+
+  if (!token) {
+    currentInfo.textContent =
+      "Enter your admin token to view the current status.";
+
+    setStatusIndicator(false);
+
+    return;
+  }
 
   try {
-    const res = await fetch("/api/admin/playlist", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-token": token,
-      },
-      body: JSON.stringify({ playlistUrl }),
-    });
-    const data = await res.json();
+    const res =
+      await fetch(
+        "/api/admin/status",
+        {
+          headers: {
+            "x-admin-token":
+              token,
+          },
+          cache: "no-store",
+        }
+      );
 
-    statusBox.classList.add("visible");
     if (!res.ok) {
-      statusBox.textContent = `Fehler: ${data.error}`;
-    } else {
-      let text = `Import erfolgreich!\n${data.matchedCount} von ${data.totalInPlaylist} Songs gefunden.`;
-      if (data.unmatchedCount > 0) {
-        text += `\n\n${data.unmatchedCount} Songs ohne Deezer-Treffer:\n`;
-        text += data.unmatched.map((u) => `- ${u.title} - ${u.artist}`).join("\n");
-      }
-      statusBox.textContent = text;
-      loadStatus();
+      currentInfo.textContent =
+        "Invalid token or no playlist imported yet.";
+
+      setStatusIndicator(false);
+
+      return;
     }
-  } catch (err) {
-    statusBox.classList.add("visible");
-    statusBox.textContent = `Netzwerkfehler: ${err.message}`;
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Playlist importieren";
+
+    const data =
+      await res.json();
+
+    setStatusIndicator(true);
+
+    if (data.playlistUrl) {
+      const lastImport =
+        data.lastImport
+          ? new Date(
+              data.lastImport
+            ).toLocaleString(
+              "de-DE"
+            )
+          : "—";
+
+      currentInfo.textContent =
+        `Playlist: ${data.playlistUrl}\n` +
+        `${data.songCount} songs in pool · ` +
+        `last import: ${lastImport}`;
+
+      urlInput.value =
+        data.playlistUrl;
+    } else {
+      currentInfo.textContent =
+        "No playlist imported yet.";
+    }
+  } catch (error) {
+    console.error(
+      "Status error:",
+      error
+    );
+
+    currentInfo.textContent =
+      "Server unreachable.";
+
+    setStatusIndicator(false);
   }
-});
+}
+
+// --------------------------------------------------
+// Token change
+// --------------------------------------------------
+
+tokenInput.addEventListener(
+  "change",
+  () => {
+    saveToken();
+    loadStatus();
+  }
+);
+
+tokenInput.addEventListener(
+  "input",
+  () => {
+    saveToken();
+  }
+);
+
+// --------------------------------------------------
+// Playlist import
+// --------------------------------------------------
+
+form.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    const token =
+      tokenInput.value.trim();
+
+    const playlistUrl =
+      urlInput.value.trim();
+
+    if (!token) {
+      showStatus(
+        "Error: Please enter your admin token.",
+        "error"
+      );
+
+      tokenInput.focus();
+
+      return;
+    }
+
+    if (!playlistUrl) {
+      showStatus(
+        "Error: Please enter a Spotify playlist URL.",
+        "error"
+      );
+
+      urlInput.focus();
+
+      return;
+    }
+
+    saveToken();
+
+    submitBtn.disabled = true;
+
+    submitBtn.textContent =
+      "Importing playlist…";
+
+    statusBox.classList.remove(
+      "visible",
+      "success",
+      "error"
+    );
+
+    try {
+      const res =
+        await fetch(
+          "/api/admin/playlist",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              "x-admin-token":
+                token,
+            },
+
+            body: JSON.stringify({
+              playlistUrl,
+            }),
+          }
+        );
+
+      const data =
+        await res.json()
+          .catch(
+            () => ({})
+          );
+
+      if (!res.ok) {
+        showStatus(
+          `Error: ${
+            data.error ||
+            "Import failed."
+          }`,
+          "error"
+        );
+
+        return;
+      }
+
+      let text =
+        "Import successful!\n\n" +
+        `${data.matchedCount} of ` +
+        `${data.totalInPlaylist} songs matched.`;
+
+      if (
+        data.unmatchedCount > 0
+      ) {
+        text +=
+          `\n\n${data.unmatchedCount} songs without a Deezer match:\n`;
+
+        text +=
+          data.unmatched
+            .map(
+              (song) =>
+                `- ${song.title} - ${song.artist}`
+            )
+            .join("\n");
+      }
+
+      showStatus(
+        text,
+        "success"
+      );
+
+      await loadStatus();
+    } catch (error) {
+      console.error(
+        "Import error:",
+        error
+      );
+
+      showStatus(
+        `Network error: ${error.message}`,
+        "error"
+      );
+    } finally {
+      submitBtn.disabled =
+        false;
+
+      submitBtn.textContent =
+        "Import playlist";
+    }
+  }
+);
+
+// --------------------------------------------------
+// Start
+// --------------------------------------------------
 
 loadStatus();
