@@ -803,3 +803,19 @@ body {
     padding: 12px;
   }
 }
+
+@media (max-width: 600px) {
+  .stage-track {
+    gap: 5px;
+    margin: 18px 0;
+  }
+
+  .stage-bar {
+    height: 7px;
+  }
+
+  .stage-bar-label {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+}
