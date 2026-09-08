@@ -52,28 +52,36 @@ async function exchangeCodeForTokens(code) {
     `${clientId}:${clientSecret}`
   ).toString("base64");
 
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: redirectUri,
-    }),
-  });
+  const res = await fetch(
+    "https://accounts.spotify.com/api/token",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type":
+          "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+      }),
+    }
+  );
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Spotify OAuth fehlgeschlagen (${res.status}): ${text}`);
+
+    throw new Error(
+      `Spotify OAuth fehlgeschlagen (${res.status}): ${text}`
+    );
   }
 
   const json = await res.json();
 
   accessToken = json.access_token;
-  accessTokenExpiry = Date.now() + json.expires_in * 1000;
+  accessTokenExpiry =
+    Date.now() + json.expires_in * 1000;
 
   if (json.refresh_token) {
     refreshToken = json.refresh_token;
@@ -91,23 +99,28 @@ async function refreshAccessToken() {
     );
   }
 
-  const { clientId, clientSecret } = getConfig();
+  const { clientId, clientSecret } =
+    getConfig();
 
   const basic = Buffer.from(
     `${clientId}:${clientSecret}`
   ).toString("base64");
 
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-    }),
-  });
+  const res = await fetch(
+    "https://accounts.spotify.com/api/token",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type":
+          "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }),
+    }
+  );
 
   if (!res.ok) {
     const text = await res.text();
@@ -124,9 +137,11 @@ async function refreshAccessToken() {
   const json = await res.json();
 
   accessToken = json.access_token;
-  accessTokenExpiry = Date.now() + json.expires_in * 1000;
+  accessTokenExpiry =
+    Date.now() + json.expires_in * 1000;
 
-  // Spotify kann bei einem Refresh einen neuen Refresh Token liefern.
+  // Spotify kann bei einem Refresh
+  // einen neuen Refresh Token liefern.
   if (json.refresh_token) {
     refreshToken = json.refresh_token;
   }
@@ -137,7 +152,8 @@ async function refreshAccessToken() {
 async function getAccessToken() {
   if (
     accessToken &&
-    Date.now() < accessTokenExpiry - 60_000
+    Date.now() <
+      accessTokenExpiry - 60_000
   ) {
     return accessToken;
   }
@@ -162,22 +178,29 @@ function extractPlaylistId(input) {
     return urlMatch[1].split("?")[0];
   }
 
-  if (/^[a-zA-Z0-9]{18,24}$/.test(trimmed)) {
+  if (
+    /^[a-zA-Z0-9]{18,24}$/.test(
+      trimmed
+    )
+  ) {
     return trimmed;
   }
 
   return null;
 }
 
-async function fetchPlaylistTracks(playlistId) {
-  const token = await getAccessToken();
+async function fetchPlaylistTracks(
+  playlistId
+) {
+  const token =
+    await getAccessToken();
 
   const tracks = [];
 
   let url =
     `https://api.spotify.com/v1/playlists/${playlistId}/items` +
     `?limit=50` +
-    `&fields=next,items(item(id,name,type,artists(name),album(name,images)))`;
+    `&fields=next,items(item(id,name,type,artists(name),album(name,images),preview_url))`;
 
   while (url) {
     const res = await fetch(url, {
@@ -187,40 +210,70 @@ async function fetchPlaylistTracks(playlistId) {
     });
 
     if (res.status === 401) {
-      // Access Token abgelaufen → einmal erneuern und erneut versuchen.
-      const newToken = await refreshAccessToken();
+      // Access Token abgelaufen
+      // -> einmal erneuern und erneut versuchen.
+      const newToken =
+        await refreshAccessToken();
 
-      const retry = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${newToken}`,
-        },
-      });
+      const retry = await fetch(
+        url,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${newToken}`,
+          },
+        }
+      );
 
       if (!retry.ok) {
-        const text = await retry.text();
+        const text =
+          await retry.text();
+
         throw new Error(
           `Spotify Playlist-Abruf fehlgeschlagen (${retry.status}): ${text}`
         );
       }
 
-      const json = await retry.json();
+      const json =
+        await retry.json();
 
-      for (const item of json.items || []) {
-        const track = item.item;
+      for (const item of
+        json.items || []) {
+        const track =
+          item.item;
 
-        if (!track || track.type !== "track" || !track.id) {
+        if (
+          !track ||
+          track.type !== "track" ||
+          !track.id
+        ) {
           continue;
         }
 
         tracks.push({
           spotifyId: track.id,
           title: track.name,
-          artist: (track.artists || [])
-            .map((a) => a.name)
-            .join(", "),
-          album: track.album ? track.album.name : "",
-          coverUrl: track.album?.images?.[0]?.url || null,
-          spotifyUrl: `https://open.spotify.com/track/${track.id}`,
+
+          artist:
+            (track.artists || [])
+              .map(
+                (a) => a.name
+              )
+              .join(", "),
+
+          album: track.album
+            ? track.album.name
+            : "",
+
+          coverUrl:
+            track.album?.images?.[0]
+              ?.url || null,
+
+          spotifyUrl:
+            `https://open.spotify.com/track/${track.id}`,
+
+          spotifyPreviewUrl:
+            track.preview_url || null,
         });
       }
 
@@ -229,44 +282,72 @@ async function fetchPlaylistTracks(playlistId) {
     }
 
     if (!res.ok) {
-      const text = await res.text();
+      const text =
+        await res.text();
 
       throw new Error(
         `Spotify Playlist-Abruf fehlgeschlagen (${res.status}): ${text}`
       );
     }
 
-    const json = await res.json();
+    const json =
+      await res.json();
 
-    for (const item of json.items || []) {
-      const track = item.item;
+    for (const item of
+      json.items || []) {
+      const track =
+        item.item;
 
-      if (!track || track.type !== "track" || !track.id) {
+      if (
+        !track ||
+        track.type !== "track" ||
+        !track.id
+      ) {
         continue;
       }
 
       tracks.push({
         spotifyId: track.id,
         title: track.name,
-        artist: (track.artists || [])
-          .map((a) => a.name)
-          .join(", "),
-        album: track.album ? track.album.name : "",
-        coverUrl: track.album?.images?.[0]?.url || null,
-        spotifyUrl: `https://open.spotify.com/track/${track.id}`,
+
+        artist:
+          (track.artists || [])
+            .map(
+              (a) => a.name
+            )
+            .join(", "),
+
+        album: track.album
+          ? track.album.name
+          : "",
+
+        coverUrl:
+          track.album?.images?.[0]
+            ?.url || null,
+
+        spotifyUrl:
+          `https://open.spotify.com/track/${track.id}`,
+
+        spotifyPreviewUrl:
+          track.preview_url || null,
       });
     }
 
     url = json.next;
   }
 
-  console.log(`Spotify: ${tracks.length} Tracks gefunden.`);
+  console.log(
+    `Spotify: ${tracks.length} Tracks gefunden.`
+  );
 
   return tracks;
 }
 
 function isSpotifyConnected() {
-  return Boolean(accessToken || refreshToken);
+  return Boolean(
+    accessToken ||
+      refreshToken
+  );
 }
 
 module.exports = {
