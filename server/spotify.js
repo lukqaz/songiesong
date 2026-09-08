@@ -189,6 +189,75 @@ function extractPlaylistId(input) {
   return null;
 }
 
+// --------------------------------------------------
+// Playlist Metadata
+// --------------------------------------------------
+//
+// Holt Name, Cover und Gesamtzahl der Songs.
+// Diese Daten werden später im Playlist-Balken
+// unten im Spiel angezeigt.
+// --------------------------------------------------
+
+async function fetchPlaylistInfo(
+  playlistId
+) {
+  const token =
+    await getAccessToken();
+
+  const url =
+    `https://api.spotify.com/v1/playlists/${playlistId}` +
+    `?fields=name,images,tracks(total)`;
+
+  let res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.status === 401) {
+    const newToken =
+      await refreshAccessToken();
+
+    res = await fetch(url, {
+      headers: {
+        Authorization:
+          `Bearer ${newToken}`,
+      },
+    });
+  }
+
+  if (!res.ok) {
+    const text =
+      await res.text();
+
+    throw new Error(
+      `Spotify Playlist-Info konnte nicht geladen werden (${res.status}): ${text}`
+    );
+  }
+
+  const json =
+    await res.json();
+
+  return {
+    name:
+      json.name ||
+      "Playlist",
+
+    iconUrl:
+      json.images?.[0]?.url ||
+      null,
+
+    songCount:
+      Number(
+        json.tracks?.total
+      ) || 0,
+  };
+}
+
+// --------------------------------------------------
+// Playlist Tracks
+// --------------------------------------------------
+
 async function fetchPlaylistTracks(
   playlistId
 ) {
@@ -355,6 +424,7 @@ module.exports = {
   exchangeCodeForTokens,
   getAccessToken,
   extractPlaylistId,
+  fetchPlaylistInfo,
   fetchPlaylistTracks,
   isSpotifyConnected,
 };
