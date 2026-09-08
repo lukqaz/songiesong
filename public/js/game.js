@@ -382,16 +382,31 @@ function playSnippet() {
 
   audio.currentTime = startAt;
 
-  audio.play().catch(() => {});
-
-  playIcon.style.display = "none";
-  pauseIcon.style.display = "block";
-
   clearTimeout(playTimeout);
 
-  playTimeout = setTimeout(() => {
-    stopSnippet();
-  }, seconds * 1000);
+  audio.play()
+    .then(() => {
+      playIcon.style.display = "none";
+      pauseIcon.style.display = "block";
+
+      const endTime = startAt + seconds;
+
+      function checkPlaybackEnd() {
+        if (audio.paused) return;
+
+        if (audio.currentTime >= endTime) {
+          stopSnippet();
+          return;
+        }
+
+        requestAnimationFrame(checkPlaybackEnd);
+      }
+
+      requestAnimationFrame(checkPlaybackEnd);
+    })
+    .catch(() => {
+      stopSnippet();
+    });
 }
 
 function stopSnippet() {
@@ -402,7 +417,6 @@ function stopSnippet() {
   playIcon.style.display = "block";
   pauseIcon.style.display = "none";
 }
-
 // --- Autocomplete ---
 let suggestionTimer = null;
 
