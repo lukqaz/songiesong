@@ -1,44 +1,85 @@
 const express = require("express");
-const { importPlaylist, loadConfig, loadPool } = require("../songPool");
+const {
+  importPlaylist,
+  loadConfig,
+  loadPool,
+} = require("../songPool");
+
+const {
+  isSpotifyConnected,
+} = require("../spotify");
 
 const router = express.Router();
 
 function requireAdminToken(req, res, next) {
   const token = req.header("x-admin-token");
-  if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
-    return res.status(401).json({ error: "Ungueltiges Admin-Token." });
+
+  if (
+    !process.env.ADMIN_TOKEN ||
+    token !== process.env.ADMIN_TOKEN
+  ) {
+    return res
+      .status(401)
+      .json({
+        error: "Ungueltiges Admin-Token.",
+      });
   }
+
   next();
 }
 
-router.get("/status", requireAdminToken, (req, res) => {
-  const config = loadConfig();
-  const pool = loadPool();
-  res.json({
-    playlistUrl: config.playlistUrl,
-    lastImport: config.lastImport,
-    songCount: pool.songs.length,
-  });
-});
+router.get(
+  "/status",
+  requireAdminToken,
+  (req, res) => {
+    const config = loadConfig();
+    const pool = loadPool();
 
-router.post("/playlist", express.json(), requireAdminToken, async (req, res) => {
-  const { playlistUrl } = req.body;
-  if (!playlistUrl) {
-    return res.status(400).json({ error: "playlistUrl fehlt." });
+    res.json({
+      playlistUrl: config.playlistUrl,
+      lastImport: config.lastImport,
+      songCount: pool.songs.length,
+      spotifyConnected:
+        isSpotifyConnected(),
+    });
   }
+);
 
-  try {
-    const result = await importPlaylist(playlistUrl);
-    res.json({ success: true, ...result });
-  } catch (err) {
-  console.error("PLAYLIST IMPORT ERROR:", err);
-  console.error(err.stack);
+router.post(
+  "/playlist",
+  express.json(),
+  requireAdminToken,
+  async (req, res) => {
+    const { playlistUrl } = req.body;
 
-  res.status(400).json({
-    error: err.message,
-    stack: err.stack
-  });
-}
-});
+    if (!playlistUrl) {
+      return res.status(400).json({
+        error: "playlistUrl fehlt.",
+      });
+    }
+
+    try {
+      const result =
+        await importPlaylist(playlistUrl);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (err) {
+      console.error(
+        "PLAYLIST IMPORT ERROR:",
+        err
+      );
+
+      console.error(err.stack);
+
+      res.status(400).json({
+        error: err.message,
+        stack: err.stack,
+      });
+    }
+  }
+);
 
 module.exports = router;
