@@ -55,6 +55,60 @@ function extractPlaylistId(input) {
 
 async function fetchPlaylistTracks(playlistId) {
   const token = await getAccessToken();
+
+  // Debug-Ausgaben
+  console.log("Spotify Token vorhanden:", !!token);
+  console.log("Spotify Playlist ID:", playlistId);
+
+  const tracks = [];
+  let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100&fields=next,items(track(id,name,artists(name),album(name,images)))`;
+
+  while (url) {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+
+      // Mehr Informationen zum tatsächlichen Spotify-Fehler
+      console.error("Spotify API Fehler:");
+      console.error("Status:", res.status);
+      console.error("URL:", url);
+      console.error("Antwort:", text);
+
+      throw new Error(
+        `Spotify Playlist-Abruf fehlgeschlagen (${res.status}): ${text}`
+      );
+    }
+
+    const json = await res.json();
+
+    for (const item of json.items || []) {
+      const track = item.track;
+      if (!track || !track.id) continue;
+
+      tracks.push({
+        spotifyId: track.id,
+        title: track.name,
+        artist: (track.artists || [])
+          .map((a) => a.name)
+          .join(", "),
+        album: track.album ? track.album.name : "",
+        coverUrl: track.album?.images?.[0]?.url || null,
+        spotifyUrl: `https://open.spotify.com/track/${track.id}`,
+      });
+    }
+
+    url = json.next;
+  }
+
+  console.log(`Spotify: ${tracks.length} Tracks gefunden.`);
+
+  return tracks;
+}
   const tracks = [];
   let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100&fields=next,items(track(id,name,artists(name),album(name,images)))`;
 
