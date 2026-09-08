@@ -1,5 +1,8 @@
 const express = require("express");
-const { loadPool } = require("../songPool");
+const {
+  loadPool,
+  loadConfig,
+} = require("../songPool");
 
 const router = express.Router();
 
@@ -61,8 +64,6 @@ const STAGE_VALUES = [
 // Normal game rounds
 // --------------------------------------------------
 
-// Speichert serverseitig, welcher Song
-// zu welcher Runde gehoert.
 const normalRounds = new Map();
 
 const ROUND_TTL_MS =
@@ -93,6 +94,7 @@ router.get(
     cleanupRounds();
 
     const pool = loadPool();
+    const config = loadConfig();
 
     if (
       !pool.songs ||
@@ -129,6 +131,28 @@ router.get(
       mode: "normal",
 
       roundId,
+
+      // --------------------------------------------------
+      // Playlist
+      // --------------------------------------------------
+
+      playlistName:
+        config.playlistName ||
+        "Playlist",
+
+      playlistIconUrl:
+        config.playlistIconUrl ||
+        null,
+
+      playlistSongCount:
+        Number(
+          config.playlistSongCount
+        ) ||
+        pool.songs.length,
+
+      // --------------------------------------------------
+      // Audio
+      // --------------------------------------------------
 
       // Deezer:
       // wird immer fuer "From beginning"
@@ -180,7 +204,6 @@ router.get(
     }
 
     // Kein kuenstliches Limit mehr.
-    // Alle passenden Songs werden zurueckgegeben.
     const results =
       list.filter(
         (song) =>
