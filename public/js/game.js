@@ -873,42 +873,35 @@ function renderAttempts() {
 // --------------------------------------------------
 
 function renderHistory() {
-  historyEl.innerHTML =
-    "";
+  historyEl.innerHTML = "";
 
-  round.history.forEach(
-    (entry) => {
-      const li =
-        document.createElement(
-          "li"
-        );
+  round.history.forEach((entry, index) => {
+    const li = document.createElement("li");
 
-      li.className =
-        entry.correct
-          ? "correct"
-          : "wrong";
+    li.className = entry.correct
+      ? "correct"
+      : "wrong";
 
-      li.innerHTML = `
-        <span>${escapeHtml(
-          entry.label
-        )}</span>
+    const stageSeconds =
+      activeStages[index] ?? currentStageSeconds();
 
-        <span>
-          ${
-            entry.correct
-              ? t("correct")
-              : entry.skipped
-                ? t("skipped")
-                : t("wrong")
-          }
-        </span>
-      `;
+    const leftLabel =
+      `${stageSeconds}s`;
 
-      historyEl.appendChild(
-        li
-      );
-    }
-  );
+    const rightLabel =
+      entry.correct
+        ? t("correct")
+        : entry.skipped
+          ? t("skipped")
+          : t("wrong");
+
+    li.innerHTML = `
+      <span>${escapeHtml(leftLabel)}</span>
+      <span>${escapeHtml(rightLabel)}</span>
+    `;
+
+    historyEl.appendChild(li);
+  });
 }
 
 // --------------------------------------------------
