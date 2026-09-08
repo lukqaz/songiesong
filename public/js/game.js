@@ -118,38 +118,72 @@ let currentLanguage =
 // Difficulty / Stages
 // --------------------------------------------------
 
-const STAGE_VALUES = [0.01, 0.1, 0.5, 2, 8, 15];
+const STAGE_VALUES = [
+  0.01,
+  0.1,
+  0.5,
+  2,
+  8,
+  15,
+];
 
 const DIFFICULTIES = [
   {
     id: "easy",
     label: "easy",
-    stages: [0.1, 0.5, 2, 8, 15],
+    stages: [
+      0.1,
+      0.5,
+      2,
+      8,
+      15,
+    ],
   },
   {
     id: "medium",
     label: "medium",
-    stages: [0.1, 0.5, 2, 8],
+    stages: [
+      0.1,
+      0.5,
+      2,
+      8,
+    ],
   },
   {
     id: "hard",
     label: "hard",
-    stages: [0.01, 0.1, 0.5, 2],
+    stages: [
+      0.01,
+      0.1,
+      0.5,
+      2,
+    ],
   },
   {
     id: "expert",
     label: "expert",
-    stages: [0.01, 0.1, 0.5],
+    stages: [
+      0.01,
+      0.1,
+      0.5,
+    ],
   },
   {
     id: "impossible",
     label: "impossible",
-    stages: [0.01, 0.1],
+    stages: [
+      0.01,
+      0.1,
+    ],
   },
 ];
 
-let activeStages = [...DIFFICULTIES[0].stages];
-let activeDifficultyId = "easy";
+let activeStages =
+  [...DIFFICULTIES[0].stages];
+
+let activeDifficultyId =
+  "easy";
+
 let useHookStart = false;
 
 // --------------------------------------------------
@@ -159,9 +193,19 @@ let useHookStart = false;
 let round = {
   mode: "normal",
   roundId: null,
+
+  // Deezer Preview
   previewUrl: null,
+
+  // Spotify Preview
+  spotifyPreviewUrl: null,
+
+  // Legacy-Felder bleiben erhalten,
+  // werden aber nicht mehr fuer die
+  // Main-Hook-Auswahl benoetigt.
   hookAvailable: false,
   hookOffsetSeconds: 0,
+
   attempt: 0,
   history: [],
   finished: false,
@@ -175,12 +219,7 @@ let loadingRound = false;
 // Playback-Zustand
 // --------------------------------------------------
 
-// Merkt sich, ob das aktuelle Segment bereits vollständig
-// abgespielt wurde. Wenn true, startet der nächste Play-Klick
-// wieder von vorne.
 let currentStageFinished = false;
-
-// Merkt sich die Position, an der pausiert wurde.
 let pausedAt = null;
 
 // --------------------------------------------------
@@ -196,7 +235,8 @@ function t(key) {
 }
 
 function applyLanguage() {
-  document.documentElement.lang = currentLanguage;
+  document.documentElement.lang =
+    currentLanguage;
 
   document
     .querySelectorAll("[data-i18n]")
@@ -207,28 +247,39 @@ function applyLanguage() {
     });
 
   document
-    .querySelectorAll("[data-i18n-placeholder]")
+    .querySelectorAll(
+      "[data-i18n-placeholder]"
+    )
     .forEach((element) => {
       element.placeholder = t(
-        element.dataset.i18nPlaceholder
+        element.dataset
+          .i18nPlaceholder
       );
     });
 
   document
-    .querySelectorAll("[data-i18n-aria-label]")
+    .querySelectorAll(
+      "[data-i18n-aria-label]"
+    )
     .forEach((element) => {
       element.setAttribute(
         "aria-label",
-        t(element.dataset.i18nAriaLabel)
+        t(
+          element.dataset
+            .i18nAriaLabel
+        )
       );
     });
 
-  languageButtons.forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.language === currentLanguage
-    );
-  });
+  languageButtons.forEach(
+    (button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.language ===
+          currentLanguage
+      );
+    }
+  );
 
   renderDifficultyControls();
   renderHistory();
@@ -237,9 +288,11 @@ function applyLanguage() {
 }
 
 function setLanguage(language) {
-  if (!translations[language]) return;
+  if (!translations[language])
+    return;
 
-  currentLanguage = language;
+  currentLanguage =
+    language;
 
   localStorage.setItem(
     "songguessr_language",
@@ -253,85 +306,154 @@ function setLanguage(language) {
 // Settings
 // --------------------------------------------------
 
-settingsBtn.addEventListener("click", () => {
-  settingsPanel.hidden = !settingsPanel.hidden;
-});
+settingsBtn.addEventListener(
+  "click",
+  () => {
+    settingsPanel.hidden =
+      !settingsPanel.hidden;
+  }
+);
 
-settingsClose.addEventListener("click", () => {
-  settingsPanel.hidden = true;
-});
-
-languageButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    setLanguage(button.dataset.language);
-  });
-});
-
-document.addEventListener("click", (event) => {
-  if (
-    !settingsPanel.hidden &&
-    !event.target.closest(".settings-panel") &&
-    !event.target.closest("#settings-btn")
-  ) {
+settingsClose.addEventListener(
+  "click",
+  () => {
     settingsPanel.hidden = true;
   }
-});
+);
+
+languageButtons.forEach(
+  (button) => {
+    button.addEventListener(
+      "click",
+      () => {
+        setLanguage(
+          button.dataset.language
+        );
+      }
+    );
+  }
+);
+
+document.addEventListener(
+  "click",
+  (event) => {
+    if (
+      !settingsPanel.hidden &&
+      !event.target.closest(
+        ".settings-panel"
+      ) &&
+      !event.target.closest(
+        "#settings-btn"
+      )
+    ) {
+      settingsPanel.hidden =
+        true;
+    }
+  }
+);
 
 // --------------------------------------------------
 // Difficulty
 // --------------------------------------------------
 
 function renderDifficultyControls() {
-  difficultyStack.innerHTML = "";
-  difficultyPills.innerHTML = "";
+  difficultyStack.innerHTML =
+    "";
 
-  DIFFICULTIES.forEach((difficulty) => {
-    const label = t(difficulty.label);
+  difficultyPills.innerHTML =
+    "";
 
-    const sideBtn = document.createElement("button");
+  DIFFICULTIES.forEach(
+    (difficulty) => {
+      const label =
+        t(difficulty.label);
 
-    sideBtn.className = "side-btn";
-    sideBtn.textContent = label;
+      const sideBtn =
+        document.createElement(
+          "button"
+        );
 
-    if (difficulty.id === activeDifficultyId) {
-      sideBtn.style.background = "var(--green)";
-      sideBtn.style.color = "#06170e";
-    }
+      sideBtn.className =
+        "side-btn";
 
-    sideBtn.addEventListener("click", () => {
-      applyDifficulty(difficulty.id);
-    });
+      sideBtn.textContent =
+        label;
 
-    difficultyStack.appendChild(sideBtn);
+      if (
+        difficulty.id ===
+        activeDifficultyId
+      ) {
+        sideBtn.style.background =
+          "var(--green)";
 
-    const pill = document.createElement("button");
+        sideBtn.style.color =
+          "#06170e";
+      }
 
-    pill.className = "pill";
-    pill.textContent = label;
+      sideBtn.addEventListener(
+        "click",
+        () => {
+          applyDifficulty(
+            difficulty.id
+          );
+        }
+      );
 
-    if (difficulty.id === activeDifficultyId) {
-      pill.classList.add(
-        `active-${difficulty.id}`
+      difficultyStack.appendChild(
+        sideBtn
+      );
+
+      const pill =
+        document.createElement(
+          "button"
+        );
+
+      pill.className =
+        "pill";
+
+      pill.textContent =
+        label;
+
+      if (
+        difficulty.id ===
+        activeDifficultyId
+      ) {
+        pill.classList.add(
+          `active-${difficulty.id}`
+        );
+      }
+
+      pill.addEventListener(
+        "click",
+        () => {
+          applyDifficulty(
+            difficulty.id
+          );
+        }
+      );
+
+      difficultyPills.appendChild(
+        pill
       );
     }
-
-    pill.addEventListener("click", () => {
-      applyDifficulty(difficulty.id);
-    });
-
-    difficultyPills.appendChild(pill);
-  });
+  );
 }
 
 function applyDifficulty(id) {
-  const preset = DIFFICULTIES.find(
-    (difficulty) => difficulty.id === id
-  );
+  const preset =
+    DIFFICULTIES.find(
+      (difficulty) =>
+        difficulty.id === id
+    );
 
   if (!preset) return;
 
-  activeDifficultyId = id;
-  activeStages = [...preset.stages];
+  activeDifficultyId =
+    id;
+
+  activeStages = [
+    ...preset.stages,
+  ];
 
   resetPlaybackState();
 
@@ -349,40 +471,74 @@ function applyDifficulty(id) {
 function renderStageGrid() {
   stageGrid.innerHTML = "";
 
-  STAGE_VALUES.forEach((value) => {
-    const chip = document.createElement("button");
+  STAGE_VALUES.forEach(
+    (value) => {
+      const chip =
+        document.createElement(
+          "button"
+        );
 
-    chip.className = "stage-chip";
-    chip.textContent = `${value}s`;
+      chip.className =
+        "stage-chip";
 
-    if (activeStages.includes(value)) {
-      chip.classList.add("active");
+      chip.textContent =
+        `${value}s`;
+
+      if (
+        activeStages.includes(
+          value
+        )
+      ) {
+        chip.classList.add(
+          "active"
+        );
+      }
+
+      chip.addEventListener(
+        "click",
+        () => {
+          toggleStage(value);
+        }
+      );
+
+      stageGrid.appendChild(
+        chip
+      );
     }
-
-    chip.addEventListener("click", () => {
-      toggleStage(value);
-    });
-
-    stageGrid.appendChild(chip);
-  });
+  );
 }
 
 function toggleStage(value) {
-  if (round.attempt > 0) return;
+  if (round.attempt > 0)
+    return;
 
-  if (activeStages.includes(value)) {
-    if (activeStages.length <= 1) return;
+  if (
+    activeStages.includes(
+      value
+    )
+  ) {
+    if (
+      activeStages.length <= 1
+    ) {
+      return;
+    }
 
-    activeStages = activeStages.filter(
-      (stage) => stage !== value
-    );
+    activeStages =
+      activeStages.filter(
+        (stage) =>
+          stage !== value
+      );
   } else {
-    activeStages = [...activeStages, value].sort(
+    activeStages = [
+      ...activeStages,
+      value,
+    ].sort(
       (a, b) => a - b
     );
   }
 
-  activeDifficultyId = null;
+  activeDifficultyId =
+    null;
 
   resetPlaybackState();
 
@@ -398,46 +554,80 @@ function toggleStage(value) {
 // --------------------------------------------------
 
 function renderStageTrack() {
-  stageTrackEl.innerHTML = "";
+  stageTrackEl.innerHTML =
+    "";
 
-  activeStages.forEach((seconds, index) => {
-    const wrapper =
-      document.createElement("div");
+  activeStages.forEach(
+    (seconds, index) => {
+      const wrapper =
+        document.createElement(
+          "div"
+        );
 
-    wrapper.className = "stage-segment";
+      wrapper.className =
+        "stage-segment";
 
-    if (index < round.attempt) {
-      wrapper.classList.add("completed");
+      if (
+        index < round.attempt
+      ) {
+        wrapper.classList.add(
+          "completed"
+        );
+      }
+
+      if (
+        index === round.attempt
+      ) {
+        wrapper.classList.add(
+          "current"
+        );
+      }
+
+      const bar =
+        document.createElement(
+          "div"
+        );
+
+      bar.className =
+        "stage-bar";
+
+      const fill =
+        document.createElement(
+          "div"
+        );
+
+      fill.className =
+        "stage-bar-fill";
+
+      fill.style.width =
+        "0%";
+
+      const label =
+        document.createElement(
+          "span"
+        );
+
+      label.className =
+        "stage-bar-label";
+
+      label.textContent =
+        `${seconds}s`;
+
+      bar.appendChild(fill);
+
+      wrapper.appendChild(
+        bar
+      );
+
+      wrapper.appendChild(
+        label
+      );
+
+      stageTrackEl.appendChild(
+        wrapper
+      );
     }
-
-    if (index === round.attempt) {
-      wrapper.classList.add("current");
-    }
-
-    const bar =
-      document.createElement("div");
-
-    bar.className = "stage-bar";
-
-    const fill =
-      document.createElement("div");
-
-    fill.className = "stage-bar-fill";
-    fill.style.width = "0%";
-
-    const label =
-      document.createElement("span");
-
-    label.className = "stage-bar-label";
-    label.textContent = `${seconds}s`;
-
-    bar.appendChild(fill);
-
-    wrapper.appendChild(bar);
-    wrapper.appendChild(label);
-
-    stageTrackEl.appendChild(wrapper);
-  });
+  );
 
   updateStageProgress(
     currentStageProgress()
@@ -445,7 +635,9 @@ function renderStageTrack() {
 }
 
 function currentStageProgress() {
-  if (currentStageFinished) {
+  if (
+    currentStageFinished
+  ) {
     return 1;
   }
 
@@ -478,44 +670,60 @@ function currentStageProgress() {
   );
 }
 
-function updateStageProgress(progress) {
+function updateStageProgress(
+  progress
+) {
   const segments =
     stageTrackEl.querySelectorAll(
       ".stage-segment"
     );
 
-  segments.forEach((segment, index) => {
-    const fill =
-      segment.querySelector(
-        ".stage-bar-fill"
-      );
-
-    if (!fill) return;
-
-    if (index < round.attempt) {
-      fill.style.width = "100%";
-      return;
-    }
-
-    if (index === round.attempt) {
-      const percentage =
-        Math.max(
-          0,
-          Math.min(100, progress * 100)
+  segments.forEach(
+    (segment, index) => {
+      const fill =
+        segment.querySelector(
+          ".stage-bar-fill"
         );
 
+      if (!fill) return;
+
+      if (
+        index < round.attempt
+      ) {
+        fill.style.width =
+          "100%";
+
+        return;
+      }
+
+      if (
+        index === round.attempt
+      ) {
+        const percentage =
+          Math.max(
+            0,
+            Math.min(
+              100,
+              progress * 100
+            )
+          );
+
+        fill.style.width =
+          `${percentage}%`;
+
+        return;
+      }
+
       fill.style.width =
-        `${percentage}%`;
-
-      return;
+        "0%";
     }
-
-    fill.style.width = "0%";
-  });
+  );
 }
 
 function resetCurrentStageProgress() {
-  currentStageFinished = false;
+  currentStageFinished =
+    false;
+
   pausedAt = null;
 
   const segments =
@@ -523,20 +731,26 @@ function resetCurrentStageProgress() {
       ".stage-segment"
     );
 
-  segments.forEach((segment, index) => {
-    const fill =
-      segment.querySelector(
-        ".stage-bar-fill"
-      );
+  segments.forEach(
+    (segment, index) => {
+      const fill =
+        segment.querySelector(
+          ".stage-bar-fill"
+        );
 
-    if (!fill) return;
+      if (!fill) return;
 
-    if (index < round.attempt) {
-      fill.style.width = "100%";
-    } else {
-      fill.style.width = "0%";
+      if (
+        index < round.attempt
+      ) {
+        fill.style.width =
+          "100%";
+      } else {
+        fill.style.width =
+          "0%";
+      }
     }
-  });
+  );
 }
 
 function resetPlaybackState() {
@@ -544,29 +758,65 @@ function resetPlaybackState() {
 
   audio.pause();
 
-  currentStageFinished = false;
+  currentStageFinished =
+    false;
+
   pausedAt = null;
 
-  playIcon.style.display = "block";
-  pauseIcon.style.display = "none";
+  playIcon.style.display =
+    "block";
+
+  pauseIcon.style.display =
+    "none";
 
   resetCurrentStageProgress();
 }
 
 function currentStageSeconds() {
-  const index = Math.min(
-    round.attempt,
-    activeStages.length - 1
-  );
+  const index =
+    Math.min(
+      round.attempt,
+      activeStages.length - 1
+    );
 
   return activeStages[index];
 }
 
+// --------------------------------------------------
+// Audioquelle
+// --------------------------------------------------
+
+function isUsingSpotifyPreview() {
+  return (
+    useHookStart &&
+    Boolean(
+      round.spotifyPreviewUrl
+    )
+  );
+}
+
+function getActivePreviewUrl() {
+  if (
+    isUsingSpotifyPreview()
+  ) {
+    return (
+      round.spotifyPreviewUrl
+    );
+  }
+
+  return (
+    round.previewUrl || ""
+  );
+}
+
+// Beide Quellen starten bei 0.
+//
+// Spotify Preview = bereits ein
+// eigener kurzer Preview-Ausschnitt.
+// Deezer = Fallback bzw.
+// "From beginning".
 function getPlaybackStartTime() {
-  return useHookStart &&
-    round.hookOffsetSeconds
-    ? round.hookOffsetSeconds
-    : 0;
+  return 0;
 }
 
 function updateStageTime() {
@@ -579,26 +829,43 @@ function updateStageTime() {
 // --------------------------------------------------
 
 function renderAttempts() {
-  attemptsRow.innerHTML = "";
+  attemptsRow.innerHTML =
+    "";
 
-  activeStages.forEach((_, index) => {
-    const dot =
-      document.createElement("div");
+  activeStages.forEach(
+    (_, index) => {
+      const dot =
+        document.createElement(
+          "div"
+        );
 
-    dot.className = "attempt-dot";
+      dot.className =
+        "attempt-dot";
 
-    if (index < round.history.length) {
-      dot.classList.add(
-        round.history[index].correct
-          ? "used-correct"
-          : "used-wrong"
+      if (
+        index <
+        round.history.length
+      ) {
+        dot.classList.add(
+          round.history[index]
+            .correct
+            ? "used-correct"
+            : "used-wrong"
+        );
+      } else if (
+        index ===
+        round.attempt
+      ) {
+        dot.classList.add(
+          "current"
+        );
+      }
+
+      attemptsRow.appendChild(
+        dot
       );
-    } else if (index === round.attempt) {
-      dot.classList.add("current");
     }
-
-    attemptsRow.appendChild(dot);
-  });
+  );
 }
 
 // --------------------------------------------------
@@ -606,31 +873,42 @@ function renderAttempts() {
 // --------------------------------------------------
 
 function renderHistory() {
-  historyEl.innerHTML = "";
+  historyEl.innerHTML =
+    "";
 
-  round.history.forEach((entry) => {
-    const li =
-      document.createElement("li");
+  round.history.forEach(
+    (entry) => {
+      const li =
+        document.createElement(
+          "li"
+        );
 
-    li.className = entry.correct
-      ? "correct"
-      : "wrong";
+      li.className =
+        entry.correct
+          ? "correct"
+          : "wrong";
 
-    li.innerHTML = `
-      <span>${escapeHtml(entry.label)}</span>
-      <span>
-        ${
-          entry.correct
-            ? t("correct")
-            : entry.skipped
-              ? t("skipped")
-              : t("wrong")
-        }
-      </span>
-    `;
+      li.innerHTML = `
+        <span>${escapeHtml(
+          entry.label
+        )}</span>
 
-    historyEl.appendChild(li);
-  });
+        <span>
+          ${
+            entry.correct
+              ? t("correct")
+              : entry.skipped
+                ? t("skipped")
+                : t("wrong")
+          }
+        </span>
+      `;
+
+      historyEl.appendChild(
+        li
+      );
+    }
+  );
 }
 
 // --------------------------------------------------
@@ -647,18 +925,21 @@ startFromBeginBtn.addEventListener(
 startFromHookBtn.addEventListener(
   "click",
   () => {
-    if (!round.hookAvailable) return;
-
     setHookMode(true);
   }
 );
 
 function setHookMode(useHook) {
-  useHookStart = useHook;
+  useHookStart =
+    useHook;
 
-  // Changing the starting point means the current
-  // playback position can no longer be reused.
+  // Beim Wechsel zwischen
+  // Deezer und Spotify Preview
+  // Playback komplett neu starten.
   resetPlaybackState();
+
+  audio.src =
+    getActivePreviewUrl();
 
   startFromBeginBtn.classList.toggle(
     "active",
@@ -669,30 +950,41 @@ function setHookMode(useHook) {
     "active",
     useHook
   );
+
+  updateStageProgress(
+    currentStageProgress()
+  );
 }
 
 function refreshHookAvailability() {
+  // Main Hook bleibt IMMER auswählbar.
+  //
+  // Falls keine Spotify Preview existiert,
+  // wird intern automatisch Deezer ab 0:00
+  // verwendet.
   startFromHookBtn.disabled =
-    !round.hookAvailable;
-
-  if (!round.hookAvailable) {
-    setHookMode(false);
-  }
+    false;
 }
 
 // --------------------------------------------------
 // Lautstärke
 // --------------------------------------------------
 
-volumeSlider.addEventListener("input", () => {
-  const value =
-    Number(volumeSlider.value);
+volumeSlider.addEventListener(
+  "input",
+  () => {
+    const value =
+      Number(
+        volumeSlider.value
+      );
 
-  audio.volume = value / 100;
+    audio.volume =
+      value / 100;
 
-  volumeValue.textContent =
-    `${value}%`;
-});
+    volumeValue.textContent =
+      `${value}%`;
+  }
+);
 
 audio.volume = 1;
 
@@ -734,17 +1026,22 @@ async function loadRandom() {
   resetPlaybackState();
 
   try {
-    const res = await fetch(
-      "/api/game/random",
-      {
-        cache: "no-store",
-      }
-    );
+    const res =
+      await fetch(
+        "/api/game/random",
+        {
+          cache:
+            "no-store",
+        }
+      );
 
     if (!res.ok) {
       const error =
-        await res.json()
-          .catch(() => ({}));
+        await res
+          .json()
+          .catch(
+            () => ({})
+          );
 
       showBlockingMessage(
         error.error ||
@@ -757,7 +1054,9 @@ async function loadRandom() {
     const data =
       await res.json();
 
-    applyRoundData(data);
+    applyRoundData(
+      data
+    );
 
     round.roundId =
       data.roundId;
@@ -782,18 +1081,28 @@ async function loadRandom() {
 function applyRoundData(data) {
   resetPlaybackState();
 
-  audio.src =
-    data.previewUrl || "";
+  round.mode =
+    "normal";
 
-  round.mode = "normal";
   round.roundId =
     data.roundId || null;
 
+  // Deezer Preview
   round.previewUrl =
     data.previewUrl || null;
 
+  // Spotify Preview
+  round.spotifyPreviewUrl =
+    data.spotifyPreviewUrl ||
+    null;
+
+  // Legacy-Werte werden weiterhin
+  // akzeptiert, aber nicht mehr
+  // fuer die Audioquelle verwendet.
   round.hookAvailable =
-    Boolean(data.hookAvailable);
+    Boolean(
+      data.spotifyPreviewUrl
+    );
 
   round.hookOffsetSeconds =
     Number(
@@ -803,13 +1112,30 @@ function applyRoundData(data) {
   round.attempt = 0;
   round.history = [];
   round.finished = false;
-  round.selectedSongId = null;
+  round.selectedSongId =
+    null;
+
+  // Wichtig:
+  // Wenn der Spieler bereits Main Hook
+  // ausgewählt hatte, bleibt diese
+  // Auswahl auch beim neuen Song erhalten.
+  //
+  // Hat der neue Song eine Spotify Preview:
+  // -> Spotify
+  //
+  // Hat er keine:
+  // -> Deezer ab 0:00
+  audio.src =
+    getActivePreviewUrl();
 
   resultEl.hidden = true;
   guessForm.hidden = false;
 
-  guessInput.value = "";
-  suggestionsEl.innerHTML = "";
+  guessInput.value =
+    "";
+
+  suggestionsEl.innerHTML =
+    "";
 
   modeLabel.textContent =
     t("normal");
@@ -823,7 +1149,9 @@ function applyRoundData(data) {
     "none";
 }
 
-function showBlockingMessage(text) {
+function showBlockingMessage(
+  text
+) {
   resultEl.hidden = false;
   guessForm.hidden = true;
 
@@ -867,7 +1195,8 @@ rerollBtn.addEventListener(
 playBtn.addEventListener(
   "click",
   () => {
-    if (round.finished) return;
+    if (round.finished)
+      return;
 
     if (audio.paused) {
       playSnippet();
@@ -884,8 +1213,6 @@ function playSnippet() {
   const startAt =
     getPlaybackStartTime();
 
-  // Wenn die Stage bereits vollständig abgespielt wurde,
-  // startet ein neuer Play-Klick wieder am Anfang.
   if (currentStageFinished) {
     try {
       audio.currentTime =
@@ -895,14 +1222,16 @@ function playSnippet() {
     }
 
     pausedAt = null;
-    currentStageFinished = false;
+    currentStageFinished =
+      false;
 
     resetCurrentStageProgress();
   } else {
-    // Wenn wir pausiert haben, an dieser Position fortsetzen.
     if (
       pausedAt !== null &&
-      Number.isFinite(pausedAt)
+      Number.isFinite(
+        pausedAt
+      )
     ) {
       try {
         audio.currentTime =
@@ -911,7 +1240,6 @@ function playSnippet() {
         return;
       }
     } else {
-      // Erster Play der Stage.
       try {
         audio.currentTime =
           startAt;
@@ -938,7 +1266,8 @@ function playSnippet() {
         getPlaybackStartTime();
 
       const endTime =
-        actualStartTime + seconds;
+        actualStartTime +
+        seconds;
 
       function checkPlaybackEnd() {
         if (audio.paused) {
@@ -963,7 +1292,8 @@ function playSnippet() {
             0,
             Math.min(
               1,
-              elapsed / seconds
+              elapsed /
+                seconds
             )
           );
 
@@ -986,7 +1316,9 @@ function playSnippet() {
           pausedAt =
             endTime;
 
-          updateStageProgress(1);
+          updateStageProgress(
+            1
+          );
 
           stopSnippet(false);
 
@@ -1010,7 +1342,8 @@ function playSnippet() {
 }
 
 function pauseSnippet() {
-  if (audio.paused) return;
+  if (audio.paused)
+    return;
 
   pausedAt =
     audio.currentTime;
@@ -1031,7 +1364,9 @@ function pauseSnippet() {
 }
 
 function cancelPlaybackLoop() {
-  if (playbackFrame !== null) {
+  if (
+    playbackFrame !== null
+  ) {
     cancelAnimationFrame(
       playbackFrame
     );
@@ -1054,7 +1389,9 @@ function stopSnippet(
     "none";
 
   if (resetProgress) {
-    currentStageFinished = false;
+    currentStageFinished =
+      false;
+
     pausedAt = null;
 
     resetCurrentStageProgress();
@@ -1126,58 +1463,69 @@ function renderSuggestions(
   suggestionsEl.innerHTML =
     "";
 
-  // Kein künstliches Limit mehr.
-  // Alle Ergebnisse vom Server werden angezeigt.
-  items.forEach((item) => {
-    const li =
-      document.createElement(
-        "li"
+  // Alle Ergebnisse vom Server
+  // werden angezeigt.
+  //
+  // Das sichtbare Fenster wird
+  // ueber CSS begrenzt und bekommt
+  // einen Scrollbalken.
+
+  items.forEach(
+    (item) => {
+      const li =
+        document.createElement(
+          "li"
+        );
+
+      li.className =
+        "suggestion-item";
+
+      li.innerHTML = `
+        <img
+          class="suggestion-cover"
+          src="${item.coverUrl || ""}"
+          alt=""
+        />
+
+        <div class="suggestion-info">
+          <div class="suggestion-title">
+            ${escapeHtml(
+              item.title
+            )}
+          </div>
+
+          <div class="s-artist">
+            ${escapeHtml(
+              item.artist
+            )}
+          </div>
+        </div>
+      `;
+
+      li.addEventListener(
+        "click",
+        () => {
+          guessInput.value =
+            `${item.title} - ${item.artist}`;
+
+          round.selectedSongId =
+            item.id;
+
+          suggestionsEl.innerHTML =
+            "";
+
+          submitGuess(
+            item.id,
+            guessInput.value
+          );
+        }
       );
 
-    li.className =
-      "suggestion-item";
-
-    li.innerHTML = `
-      <img
-        class="suggestion-cover"
-        src="${item.coverUrl || ""}"
-        alt=""
-      />
-
-      <div class="suggestion-info">
-        <div class="suggestion-title">
-          ${escapeHtml(item.title)}
-        </div>
-
-        <div class="s-artist">
-          ${escapeHtml(item.artist)}
-        </div>
-      </div>
-    `;
-
-    li.addEventListener(
-      "click",
-      () => {
-        guessInput.value =
-          `${item.title} - ${item.artist}`;
-
-        round.selectedSongId =
-          item.id;
-
-        suggestionsEl.innerHTML =
-          "";
-
-        submitGuess(
-          item.id,
-          guessInput.value
-        );
-      }
-    );
-
-    suggestionsEl.appendChild(
-      li
-    );
-  });
+      suggestionsEl.appendChild(
+        li
+      );
+    }
+  );
 }
 
 function escapeHtml(value) {
@@ -1262,7 +1610,8 @@ async function submitGuess(
   label,
   skipped = false
 ) {
-  if (round.finished) return;
+  if (round.finished)
+    return;
 
   if (!round.roundId) {
     showBlockingMessage(
@@ -1288,16 +1637,21 @@ async function submitGuess(
       "/api/game/guess",
       {
         method: "POST",
+
         headers: {
           "Content-Type":
             "application/json",
         },
+
         body: JSON.stringify({
           songId,
+
           attempt:
             attemptNumber,
+
           maxAttempts:
             activeStages.length,
+
           roundId:
             round.roundId,
         }),
@@ -1313,8 +1667,11 @@ async function submitGuess(
   }
 
   const data =
-    await res.json()
-      .catch(() => ({}));
+    await res
+      .json()
+      .catch(
+        () => ({})
+      );
 
   if (!res.ok) {
     showBlockingMessage(
@@ -1327,8 +1684,12 @@ async function submitGuess(
 
   round.history.push({
     label,
+
     correct:
-      Boolean(data.correct),
+      Boolean(
+        data.correct
+      ),
+
     skipped,
   });
 
@@ -1338,18 +1699,24 @@ async function submitGuess(
   round.selectedSongId =
     null;
 
-  guessInput.value = "";
+  guessInput.value =
+    "";
 
-  currentStageFinished = false;
+  currentStageFinished =
+    false;
+
   pausedAt = null;
 
   const gameOver =
-    Boolean(data.correct) ||
+    Boolean(
+      data.correct
+    ) ||
     round.attempt >=
       activeStages.length;
 
   if (gameOver) {
-    round.finished = true;
+    round.finished =
+      true;
   }
 
   renderAttempts();
@@ -1363,7 +1730,9 @@ async function submitGuess(
   ) {
     showResult(
       data.reveal,
-      Boolean(data.correct)
+      Boolean(
+        data.correct
+      )
     );
   }
 }
@@ -1411,7 +1780,8 @@ function showResult(
     "inline";
 
   resultLink.href =
-    reveal.spotifyUrl || "#";
+    reveal.spotifyUrl ||
+    "#";
 
   stopSnippet();
 
@@ -1419,7 +1789,9 @@ function showResult(
     audio.currentTime = 0;
   } catch {}
 
-  audio.play().catch(() => {});
+  audio
+    .play()
+    .catch(() => {});
 
   playIcon.style.display =
     "none";
@@ -1460,6 +1832,13 @@ function renderAll() {
   renderHistory();
   updateStageTime();
   refreshHookAvailability();
+
+  // Falls der Modus bereits auf
+  // Main Hook steht, sicherstellen,
+  // dass die aktuelle Audioquelle
+  // zum aktuellen Song passt.
+  audio.src =
+    getActivePreviewUrl();
 }
 
 applyLanguage();
