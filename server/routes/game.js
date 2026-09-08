@@ -1,120 +1,194 @@
 const express = require("express");
-const { loadPool, getDailySong, getPublicSongList } = require("../songPool");
+const { loadPool } = require("../songPool");
 
 const router = express.Router();
 
-// Alle waehlbaren Ausschnittslaengen in Sekunden (siehe STAGES im UI)
+// Alle waehlbaren Ausschnittslaengen in Sekunden
 const STAGE_VALUES = [0.01, 0.1, 0.5, 2, 8, 15];
 
-router.get("/today", (req, res) => {
-  const pool = loadPool();
-  const song = getDailySong(pool);
-  if (!song) {
-    return res.status(503).json({
-      error: "Noch kein Song-Pool vorhanden. Bitte zuerst unter /admin.html eine Playlist importieren.",
-    });
-  }
+// --------------------------------------------------
+// Normal game rounds
+// --------------------------------------------------
 
-  res.json({
-    mode: "daily",
-    date: new Date().toISOString().slice(0, 10),
-    previewUrl: song.previewUrl,
-    hookAvailable: Boolean(song.hookStartMs),
-    stageValues: STAGE_VALUES,
-  });
-});
+// Merkt sich, welcher Song zu welcher Runde gehoert.
+// Die eigentliche Song-ID wird nur serverseitig gespeichert.
+const normalRounds = new Map();
 
-// Merkt sich, welcher Song zu welcher Practice-Runde gehoert (nur im
-// Server-Speicher, wird dem Client nie mitgeteilt). Alte Runden verfallen
-// nach einer Weile, damit der Speicher nicht unbegrenzt waechst.
-const practiceRounds = new Map();
 const ROUND_TTL_MS = 30 * 60 * 1000;
 
 function cleanupRounds() {
   const now = Date.now();
-  for (const [id, round] of practiceRounds) {
-    if (now - round.createdAt > ROUND_TTL_MS) practiceRounds.delete(id);
+
+  for (const [id, round] of normalRounds) {
+    if (now - round.createdAt > ROUND_TTL_MS) {
+      normalRounds.delete(id);
+    }
   }
 }
 
-// Zufaelliger Song fuer den Practice-Modus (Reroll-Button im UI)
+// --------------------------------------------------
+// Random song
+// --------------------------------------------------
+
 router.get("/random", (req, res) => {
   cleanupRounds();
+
   const pool = loadPool();
+
   if (!pool.songs || pool.songs.length === 0) {
-    return res.status(503).json({ error: "Noch kein Song-Pool vorhanden." });
+    return res.status(503).json({
+      error:
+        "No songs available. Import a playlist in the admin panel first.",
+    });
   }
-  const song = pool.songs[Math.floor(Math.random() * pool.songs.length)];
-  const roundId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  practiceRounds.set(roundId, { songId: song.id, createdAt: Date.now() });
+
+  const song =
+    pool.songs[
+      Math.floor(
+        Math.random() * pool.songs.length
+      )
+    ];
+
+  const roundId =
+    `${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2)}`;
+
+  normalRounds.set(roundId, {
+    songId: song.id,
+    createdAt: Date.now(),
+  });
 
   res.json({
-    mode: "practice",
+    mode: "normal",
     roundId,
+
     previewUrl: song.previewUrl,
-    hookAvailable: Boolean(song.hookStartMs),
+
+    hookAvailable: Boolean(
+      song.hookStartMs
+    ),
+
+    hookOffsetSeconds:
+      song.hookStartMs
+        ? song.hookStartMs / 1000
+        : 0,
+
     stageValues: STAGE_VALUES,
   });
 });
 
-router.get("/suggestions", (req, res) => {
-  const query = (req.query.q || "").toLowerCase().trim();
-  const pool = loadPool();
-  const list = pool.songs.map((s) => ({
-  id: s.id,
-  title: s.title,
-  artist: s.artist,
-  coverUrl: s.coverUrl,
-}));
+// --------------------------------------------------
+// Autocomplete suggestions
+// --------------------------------------------------
 
-  if (!query) return res.json([]);
+router.get("/suggestions", (req, res) => {
+  const query = (req.query.q || "")
+    .toLowerCase()
+    .trim();
+
+  const pool = loadPool();
+
+  const list = pool.songs.map((song) => ({
+    id: song.id,
+    title: song.title,
+    artist: song.artist,
+    coverUrl: song.coverUrl,
+  }));
+
+  if (!query) {
+    return res.json([]);
+  }
 
   const results = list
     .filter(
-      (s) =>
-        s.title.toLowerCase().includes(query) ||
-        s.artist.toLowerCase().includes(query)
+      (song) =>
+        song.title
+          .toLowerCase()
+          .includes(query) ||
+        song.artist
+          .toLowerCase()
+          .includes(query)
     )
     .slice(0, 8);
 
   res.json(results);
 });
 
-router.post("/guess", express.json(), (req, res) => {
-  const { songId, attempt, maxAttempts, roundId } = req.body;
-  const pool = loadPool();
+// --------------------------------------------------
+// Guess
+// --------------------------------------------------
 
-  let answer = null;
-  if (roundId) {
-    const round = practiceRounds.get(roundId);
-    if (!round) {
-      return res.status(400).json({ error: "Practice-Runde abgelaufen oder unbekannt. Bitte neu wuerfeln." });
+router.post(
+  "/guess",
+  express.json(),
+  (req, res) => {
+    const {
+      songId,
+      attempt,
+      maxAttempts,
+      roundId,
+    } = req.body;
+
+    cleanupRounds();
+
+    const pool = loadPool();
+
+    if (
+      !roundId ||
+      !normalRounds.has(roundId)
+    ) {
+      return res.status(400).json({
+        error:
+          "Round expired. Please start a new song.",
+      });
     }
-    answer = pool.songs.find((s) => s.id === round.songId) || null;
-  } else {
-    answer = getDailySong(pool);
-  }
 
-  if (!answer) {
-    return res.status(503).json({ error: "Kein Song fuer diese Runde verfuegbar." });
-  }
+    const round =
+      normalRounds.get(roundId);
 
-  const isCorrect = songId === answer.id;
-  const isLastAttempt = attempt >= (maxAttempts || 6);
+    const answer =
+      pool.songs.find(
+        (song) =>
+          song.id === round.songId
+      ) || null;
 
-  const response = { correct: isCorrect };
+    if (!answer) {
+      normalRounds.delete(roundId);
 
-  if (isCorrect || isLastAttempt) {
-    response.reveal = {
-      title: answer.title,
-      artist: answer.artist,
-      coverUrl: answer.coverUrl,
-      spotifyUrl: answer.spotifyUrl,
+      return res.status(503).json({
+        error:
+          "No song available for this round.",
+      });
+    }
+
+    const isCorrect =
+      songId === answer.id;
+
+    const isLastAttempt =
+      Number(attempt) >=
+      Number(maxAttempts || 6);
+
+    const response = {
+      correct: isCorrect,
     };
-    if (roundId) practiceRounds.delete(roundId);
-  }
 
-  res.json(response);
-});
+    if (
+      isCorrect ||
+      isLastAttempt
+    ) {
+      response.reveal = {
+        title: answer.title,
+        artist: answer.artist,
+        coverUrl: answer.coverUrl,
+        spotifyUrl: answer.spotifyUrl,
+      };
+
+      normalRounds.delete(roundId);
+    }
+
+    res.json(response);
+  }
+);
 
 module.exports = router;
