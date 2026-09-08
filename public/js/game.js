@@ -420,9 +420,10 @@ function showResult(reveal, won) {
   resultEl.hidden = false;
   guessForm.hidden = true;
 
-  // Grün bei richtig, Rot bei falsch
-  resultEl.classList.toggle("won", won);
-  resultEl.classList.toggle("lost", !won);
+  const modal = resultEl.querySelector(".result-modal");
+
+  modal.classList.toggle("won", won);
+  modal.classList.toggle("lost", !won);
 
   resultStatus.textContent = won
     ? "Du hast es! ✓"
@@ -435,7 +436,6 @@ function showResult(reveal, won) {
   resultLink.style.display = "inline";
   resultLink.href = reveal.spotifyUrl || "#";
 
-  // Song komplett abspielen
   stopSnippet();
   audio.currentTime = 0;
   audio.play().catch(() => {});
