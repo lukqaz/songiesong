@@ -420,9 +420,13 @@ function showResult(reveal, won) {
   resultEl.hidden = false;
   guessForm.hidden = true;
 
+  // Grün bei richtig, Rot bei falsch
+  resultEl.classList.toggle("won", won);
+  resultEl.classList.toggle("lost", !won);
+
   resultStatus.textContent = won
     ? "Du hast es! ✓"
-    : "Leider nicht erraten";
+    : "Der Song war:";
 
   resultSong.textContent = `${reveal.title} - ${reveal.artist}`;
 
@@ -431,9 +435,8 @@ function showResult(reveal, won) {
   resultLink.style.display = "inline";
   resultLink.href = reveal.spotifyUrl || "#";
 
-  // Kompletten Song abspielen
+  // Song komplett abspielen
   stopSnippet();
-
   audio.currentTime = 0;
   audio.play().catch(() => {});
 
