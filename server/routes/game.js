@@ -60,7 +60,12 @@ router.get("/random", (req, res) => {
 router.get("/suggestions", (req, res) => {
   const query = (req.query.q || "").toLowerCase().trim();
   const pool = loadPool();
-  const list = getPublicSongList(pool);
+  const list = pool.songs.map((s) => ({
+  id: s.id,
+  title: s.title,
+  artist: s.artist,
+  coverUrl: s.coverUrl,
+}));
 
   if (!query) return res.json([]);
 
