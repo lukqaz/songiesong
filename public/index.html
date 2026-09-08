@@ -143,6 +143,44 @@
 
       <ul class="guess-history" id="guess-history"></ul>
 
+      <!-- Playlist indicator -->
+      <div class="playlist-indicator" id="playlist-indicator">
+
+        <div class="playlist-icon-wrap">
+          <img
+            id="playlist-icon"
+            class="playlist-icon"
+            src=""
+            alt=""
+            hidden
+          />
+
+          <span
+            id="playlist-icon-placeholder"
+            class="playlist-icon-placeholder"
+          >
+            &#9835;
+          </span>
+        </div>
+
+        <div class="playlist-info">
+          <div
+            class="playlist-name"
+            id="playlist-name"
+          >
+            Playlist
+          </div>
+
+          <div
+            class="playlist-count"
+            id="playlist-count"
+          >
+            Song Guessr
+          </div>
+        </div>
+
+      </div>
+
       <!-- Result -->
       <div class="result-overlay" id="result" hidden>
         <div class="result-modal">
@@ -199,7 +237,7 @@
         <button
           class="wide-toggle"
           id="start-from-hook"
-          title="Only available when a hook timestamp exists for the song"
+          title="Uses Spotify preview when available, otherwise starts from the beginning"
           data-i18n="fromHook"
         >
           Main Hook
