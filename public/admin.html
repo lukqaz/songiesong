@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin &mdash; Playlist verwalten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/style.css" />
+<style>
+  .admin-card { max-width: 480px; margin: 0 auto; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; width: 100%; }
+  .field label { font-size: 13px; color: var(--text-muted); }
+  .field input { padding: 12px; border-radius: 10px; border: 1px solid #34364a; background: var(--surface-raised); color: var(--text); font-family: var(--font-mono); font-size: 13px; }
+  .field input:focus { outline: none; border-color: var(--amber); }
+  .primary-btn { width: 100%; padding: 13px; border-radius: 12px; border: none; background: var(--amber); color: var(--bg); font-family: var(--font-display); font-weight: 500; cursor: pointer; }
+  .primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status-box { margin-top: 18px; padding: 14px; border-radius: 12px; background: var(--surface-raised); font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; display: none; }
+  .status-box.visible { display: block; }
+  .meta { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <span class="wordmark">Admin</span>
+      <span class="tagline">Songauswahl fuer Tageslied verwalten</span>
+    </header>
+
+    <main class="game-card admin-card">
+      <p class="meta" id="current-info">Lade aktuellen Stand...</p>
+
+      <form id="admin-form" style="width:100%">
+        <div class="field">
+          <label for="admin-token">Admin-Token</label>
+          <input type="password" id="admin-token" placeholder="aus der .env Datei" />
+        </div>
+        <div class="field">
+          <label for="playlist-url">Spotify-Playlist-Link</label>
+          <input type="text" id="playlist-url" placeholder="https://open.spotify.com/playlist/..." />
+        </div>
+        <button type="submit" class="primary-btn" id="submit-btn">Playlist importieren</button>
+      </form>
+
+      <div class="status-box" id="status-box"></div>
+    </main>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

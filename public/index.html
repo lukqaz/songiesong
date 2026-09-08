@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tageslied &mdash; errate den Song</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="layout">
+
+    <!-- Linke Spalte: Schnellauswahl + Aktionen -->
+    <aside class="sidebar sidebar-left">
+      <div class="pill-stack" id="difficulty-stack"></div>
+      <button class="side-btn" id="reroll-btn">&#8635; Neu wuerfeln</button>
+      <button class="side-btn" id="filters-btn">&#9881; Filter</button>
+      <button class="side-btn" id="feedback-btn">&#128172; Feedback</button>
+    </aside>
+
+    <!-- Mitte: eigentlicher Player -->
+    <main class="board">
+      <header class="board-header">
+        <span class="wordmark">Tageslied</span>
+        <span class="mode-label" id="mode-label">Taegliche Runde</span>
+      </header>
+
+      <div class="pill-row" id="difficulty-pills"></div>
+
+      <div class="stage-track" id="stage-track"></div>
+
+      <div class="player">
+        <button class="play-btn" id="play-btn" aria-label="Ausschnitt abspielen">
+          <svg id="play-icon" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7-11-7z" fill="currentColor"/></svg>
+          <svg id="pause-icon" viewBox="0 0 24 24" fill="none" style="display:none">
+            <rect x="6" y="5" width="4" height="14" fill="currentColor"/><rect x="14" y="5" width="4" height="14" fill="currentColor"/>
+          </svg>
+        </button>
+        <span class="stage-time" id="stage-time">0.1s</span>
+      </div>
+
+      <div class="attempts" id="attempts-row"></div>
+
+      <form class="guess-form" id="guess-form" autocomplete="off">
+        <div class="input-wrap">
+          <input type="text" id="guess-input" placeholder="Songs durchsuchen..." aria-label="Song erraten" />
+          <ul class="suggestions" id="suggestions"></ul>
+        </div>
+        <button type="button" class="skip-btn" id="skip-btn">&#9199; Skip</button>
+      </form>
+
+      <ul class="guess-history" id="guess-history"></ul>
+
+      <div class="result" id="result" hidden>
+        <img id="result-cover" class="result-cover" alt="" />
+        <div class="result-text">
+          <p class="result-status" id="result-status"></p>
+          <p class="result-song" id="result-song"></p>
+          <a id="result-link" class="result-link" href="#" target="_blank" rel="noopener">Auf Spotify anhoeren</a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Rechte Spalte: Einstellungen -->
+    <aside class="sidebar sidebar-right">
+      <section class="setting-group">
+        <p class="setting-label">Song-Start</p>
+        <button class="wide-toggle active" id="start-from-begin">Von Anfang an</button>
+        <button class="wide-toggle" id="start-from-hook" title="Nur verfuegbar, wenn fuer den Song ein Hook-Zeitpunkt hinterlegt ist">Main Hook</button>
+      </section>
+
+      <section class="setting-group">
+        <p class="setting-label">Stages</p>
+        <div class="stage-grid" id="stage-grid"></div>
+      </section>
+
+      <section class="setting-group">
+        <p class="setting-label">Naechster Song</p>
+        <label class="toggle-row">
+          <span>Auto-Reroll</span>
+          <input type="checkbox" id="auto-reroll" />
+        </label>
+      </section>
+
+      <section class="setting-group">
+        <p class="setting-label">Lautstaerke <span id="volume-value">100%</span></p>
+        <input type="range" id="volume-slider" min="0" max="100" value="100" />
+      </section>
+    </aside>
+
+  </div>
+
+  <audio id="audio" preload="none"></audio>
+  <script src="/js/game.js"></script>
+</body>
+</html>
