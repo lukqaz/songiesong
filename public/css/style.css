@@ -254,6 +254,52 @@ body {
 .suggestions li:hover, .suggestions li.active { background: var(--green-dim); }
 .suggestions .s-artist { color: var(--text-muted); font-size: 12px; }
 
+/* --- Autocomplete mit Cover --- */
+.suggestions li.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background: var(--green-dim);
+}
+
+.suggestion-cover {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 7px;
+  object-fit: cover;
+  background: #263029;
+}
+
+.suggestion-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.suggestion-title {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestions .s-artist {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .skip-btn {
   padding: 0 22px;
   border-radius: 14px;
