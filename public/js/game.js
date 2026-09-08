@@ -132,7 +132,8 @@ const translations = {
   },
 };
 
-let currentLanguage = localStorage.getItem("songguessr_language") || "en";
+let currentLanguage =
+  localStorage.getItem("songguessr_language") || "en";
 
 let activeStages = [...DIFFICULTIES[0].stages];
 let activeDifficultyId = "easy";
@@ -153,12 +154,12 @@ let round = {
 let playbackFrame = null;
 let loadingRound = false;
 
-// --------------------------------------------------
-// Translation
-// --------------------------------------------------
-
 function t(key) {
-  return translations[currentLanguage]?.[key] ?? translations.en[key] ?? key;
+  return (
+    translations[currentLanguage]?.[key] ??
+    translations.en[key] ??
+    key
+  );
 }
 
 function applyLanguage() {
@@ -168,16 +169,22 @@ function applyLanguage() {
     element.textContent = t(element.dataset.i18n);
   });
 
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
-    element.placeholder = t(element.dataset.i18nPlaceholder);
-  });
+  document
+    .querySelectorAll("[data-i18n-placeholder]")
+    .forEach((element) => {
+      element.placeholder = t(
+        element.dataset.i18nPlaceholder
+      );
+    });
 
-  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
-    element.setAttribute(
-      "aria-label",
-      t(element.dataset.i18nAriaLabel)
-    );
-  });
+  document
+    .querySelectorAll("[data-i18n-aria-label]")
+    .forEach((element) => {
+      element.setAttribute(
+        "aria-label",
+        t(element.dataset.i18nAriaLabel)
+      );
+    });
 
   languageButtons.forEach((button) => {
     button.classList.toggle(
@@ -373,7 +380,8 @@ function currentStageSeconds() {
 }
 
 function updateStageTime() {
-  stageTimeEl.textContent = `${currentStageSeconds()}s`;
+  stageTimeEl.textContent =
+    `${currentStageSeconds()}s`;
 }
 
 // --------------------------------------------------
@@ -462,7 +470,8 @@ function setHookMode(useHook) {
 }
 
 function refreshHookAvailability() {
-  startFromHookBtn.disabled = !round.hookAvailable;
+  startFromHookBtn.disabled =
+    !round.hookAvailable;
 
   if (!round.hookAvailable) {
     setHookMode(false);
@@ -483,7 +492,34 @@ volumeSlider.addEventListener("input", () => {
 audio.volume = 1;
 
 // --------------------------------------------------
-// Load normal/random round
+// DAILY MODE — DISABLED
+// --------------------------------------------------
+// Daily bleibt absichtlich im Code als Platzhalter erhalten.
+// Es wird aktuell NICHT aufgerufen und beeinflusst den
+// normalen Spielmodus nicht.
+//
+// Falls Daily spaeter wieder aktiviert werden soll, kann
+// hier wieder eine /today-Logik eingebaut werden.
+//
+// Wichtig: Aktuell startet das Spiel immer mit loadRandom().
+// --------------------------------------------------
+
+// async function loadDaily() {
+//   // DISABLED — Daily currently unused.
+//   // Dieser Bereich macht absichtlich nichts.
+// }
+
+// function loadSavedDailyState(date) {
+//   // DISABLED — Daily currently unused.
+//   return null;
+// }
+
+// function persistDailyState(extra = {}) {
+//   // DISABLED — Daily currently unused.
+// }
+
+// --------------------------------------------------
+// Normal / Random Mode
 // --------------------------------------------------
 
 async function loadRandom() {
@@ -494,12 +530,17 @@ async function loadRandom() {
   stopSnippet();
 
   try {
-    const res = await fetch("/api/game/random", {
-      cache: "no-store",
-    });
+    const res = await fetch(
+      "/api/game/random",
+      {
+        cache: "no-store",
+      }
+    );
 
     if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
+      const error = await res
+        .json()
+        .catch(() => ({}));
 
       showBlockingMessage(
         error.error || t("noSongPool")
@@ -518,7 +559,10 @@ async function loadRandom() {
 
     guessInput.focus();
   } catch (error) {
-    console.error("Round loading error:", error);
+    console.error(
+      "Round loading error:",
+      error
+    );
 
     showBlockingMessage(
       t("unavailable")
@@ -536,6 +580,7 @@ function applyRoundData(data) {
   round.mode = "normal";
   round.roundId = data.roundId || null;
   round.previewUrl = data.previewUrl || null;
+
   round.hookAvailable = Boolean(
     data.hookAvailable
   );
@@ -554,6 +599,8 @@ function applyRoundData(data) {
   guessInput.value = "";
   suggestionsEl.innerHTML = "";
 
+  modeLabel.textContent = t("normal");
+
   refreshHookAvailability();
 
   playIcon.style.display = "block";
@@ -569,7 +616,10 @@ function showBlockingMessage(text) {
   );
 
   if (modal) {
-    modal.classList.remove("won", "lost");
+    modal.classList.remove(
+      "won",
+      "lost"
+    );
   }
 
   resultStatus.textContent = t("notice");
@@ -620,7 +670,8 @@ function playSnippet() {
       playIcon.style.display = "none";
       pauseIcon.style.display = "block";
 
-      const endTime = startAt + seconds;
+      const endTime =
+        startAt + seconds;
 
       function checkPlaybackEnd() {
         if (audio.paused) {
@@ -628,19 +679,24 @@ function playSnippet() {
           return;
         }
 
-        if (audio.currentTime >= endTime) {
+        if (
+          audio.currentTime >=
+          endTime
+        ) {
           stopSnippet();
           return;
         }
 
-        playbackFrame = requestAnimationFrame(
-          checkPlaybackEnd
-        );
+        playbackFrame =
+          requestAnimationFrame(
+            checkPlaybackEnd
+          );
       }
 
-      playbackFrame = requestAnimationFrame(
-        checkPlaybackEnd
-      );
+      playbackFrame =
+        requestAnimationFrame(
+          checkPlaybackEnd
+        );
     })
     .catch(() => {
       stopSnippet();
@@ -649,7 +705,10 @@ function playSnippet() {
 
 function cancelPlaybackLoop() {
   if (playbackFrame !== null) {
-    cancelAnimationFrame(playbackFrame);
+    cancelAnimationFrame(
+      playbackFrame
+    );
+
     playbackFrame = null;
   }
 }
@@ -674,40 +733,47 @@ guessInput.addEventListener("input", () => {
 
   clearTimeout(suggestionTimer);
 
-  const query = guessInput.value.trim();
+  const query =
+    guessInput.value.trim();
 
   if (query.length < 2) {
     suggestionsEl.innerHTML = "";
     return;
   }
 
-  suggestionTimer = setTimeout(async () => {
-    try {
-      const res = await fetch(
-        `/api/game/suggestions?q=${encodeURIComponent(query)}`
-      );
+  suggestionTimer = setTimeout(
+    async () => {
+      try {
+        const res = await fetch(
+          `/api/game/suggestions?q=${encodeURIComponent(query)}`
+        );
 
-      const items = await res.json();
+        const items =
+          await res.json();
 
-      renderSuggestions(items);
-    } catch (error) {
-      console.error(
-        "Autocomplete error:",
-        error
-      );
+        renderSuggestions(items);
+      } catch (error) {
+        console.error(
+          "Autocomplete error:",
+          error
+        );
 
-      suggestionsEl.innerHTML = "";
-    }
-  }, 200);
+        suggestionsEl.innerHTML = "";
+      }
+    },
+    200
+  );
 });
 
 function renderSuggestions(items) {
   suggestionsEl.innerHTML = "";
 
   items.forEach((item) => {
-    const li = document.createElement("li");
+    const li =
+      document.createElement("li");
 
-    li.className = "suggestion-item";
+    li.className =
+      "suggestion-item";
 
     li.innerHTML = `
       <img
@@ -727,19 +793,24 @@ function renderSuggestions(items) {
       </div>
     `;
 
-    li.addEventListener("click", () => {
-      guessInput.value =
-        `${item.title} - ${item.artist}`;
+    li.addEventListener(
+      "click",
+      () => {
+        guessInput.value =
+          `${item.title} - ${item.artist}`;
 
-      round.selectedSongId = item.id;
+        round.selectedSongId =
+          item.id;
 
-      suggestionsEl.innerHTML = "";
+        suggestionsEl.innerHTML =
+          "";
 
-      submitGuess(
-        item.id,
-        guessInput.value
-      );
-    });
+        submitGuess(
+          item.id,
+          guessInput.value
+        );
+      }
+    );
 
     suggestionsEl.appendChild(li);
   });
@@ -750,48 +821,71 @@ function escapeHtml(value) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 }
 
-document.addEventListener("click", (event) => {
-  if (!event.target.closest(".input-wrap")) {
-    suggestionsEl.innerHTML = "";
+document.addEventListener(
+  "click",
+  (event) => {
+    if (
+      !event.target.closest(
+        ".input-wrap"
+      )
+    ) {
+      suggestionsEl.innerHTML =
+        "";
+    }
   }
-});
+);
 
 // --------------------------------------------------
 // Skip
 // --------------------------------------------------
 
-skipBtn.addEventListener("click", () => {
-  if (!round.finished) {
-    submitGuess(
-      null,
-      t("skipped")
-    );
+skipBtn.addEventListener(
+  "click",
+  () => {
+    if (!round.finished) {
+      submitGuess(
+        null,
+        t("skipped")
+      );
+    }
   }
-});
+);
 
 // --------------------------------------------------
 // Guess
 // --------------------------------------------------
 
-guessForm.addEventListener("submit", (event) => {
-  event.preventDefault();
+guessForm.addEventListener(
+  "submit",
+  (event) => {
+    event.preventDefault();
 
-  if (
-    round.selectedSongId &&
-    !round.finished
-  ) {
-    submitGuess(
-      round.selectedSongId,
-      guessInput.value
-    );
+    if (
+      round.selectedSongId &&
+      !round.finished
+    ) {
+      submitGuess(
+        round.selectedSongId,
+        guessInput.value
+      );
+    }
   }
-});
+);
 
-async function submitGuess(songId, label) {
+async function submitGuess(
+  songId,
+  label
+) {
   if (round.finished) return;
 
   if (!round.roundId) {
@@ -817,18 +911,25 @@ async function submitGuess(songId, label) {
   let res;
 
   try {
-    res = await fetch("/api/game/guess", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        songId,
-        attempt: attemptNumber,
-        maxAttempts: activeStages.length,
-        roundId: round.roundId,
-      }),
-    });
+    res = await fetch(
+      "/api/game/guess",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          songId,
+          attempt:
+            attemptNumber,
+          maxAttempts:
+            activeStages.length,
+          roundId:
+            round.roundId,
+        }),
+      }
+    );
   } catch (error) {
     console.error(
       "Guess request failed:",
@@ -838,13 +939,15 @@ async function submitGuess(songId, label) {
     return;
   }
 
-  const data = await res.json().catch(
-    () => ({})
-  );
+  const data =
+    await res.json().catch(
+      () => ({})
+    );
 
   if (!res.ok) {
     showBlockingMessage(
-      data.error || t("roundExpired")
+      data.error ||
+        t("roundExpired")
     );
 
     return;
@@ -852,16 +955,21 @@ async function submitGuess(songId, label) {
 
   round.history.push({
     label,
-    correct: Boolean(data.correct),
+    correct: Boolean(
+      data.correct
+    ),
   });
 
-  round.attempt = attemptNumber;
+  round.attempt =
+    attemptNumber;
+
   guessInput.value = "";
   round.selectedSongId = null;
 
   const gameOver =
     Boolean(data.correct) ||
-    round.attempt >= activeStages.length;
+    round.attempt >=
+      activeStages.length;
 
   if (gameOver) {
     round.finished = true;
@@ -872,7 +980,10 @@ async function submitGuess(songId, label) {
   renderHistory();
   updateStageTime();
 
-  if (gameOver && data.reveal) {
+  if (
+    gameOver &&
+    data.reveal
+  ) {
     showResult(
       data.reveal,
       Boolean(data.correct)
@@ -884,13 +995,17 @@ async function submitGuess(songId, label) {
 // Result
 // --------------------------------------------------
 
-function showResult(reveal, won) {
+function showResult(
+  reveal,
+  won
+) {
   resultEl.hidden = false;
   guessForm.hidden = true;
 
-  const modal = resultEl.querySelector(
-    ".result-modal"
-  );
+  const modal =
+    resultEl.querySelector(
+      ".result-modal"
+    );
 
   if (modal) {
     modal.classList.toggle(
@@ -904,9 +1019,10 @@ function showResult(reveal, won) {
     );
   }
 
-  resultStatus.textContent = won
-    ? t("youGotIt")
-    : t("songWas");
+  resultStatus.textContent =
+    won
+      ? t("youGotIt")
+      : t("songWas");
 
   resultSong.textContent =
     `${reveal.title} - ${reveal.artist}`;
@@ -914,7 +1030,9 @@ function showResult(reveal, won) {
   resultCover.src =
     reveal.coverUrl || "";
 
-  resultLink.style.display = "inline";
+  resultLink.style.display =
+    "inline";
+
   resultLink.href =
     reveal.spotifyUrl || "#";
 
@@ -928,29 +1046,32 @@ function showResult(reveal, won) {
   audio.play().catch(() => {});
 
   playIcon.style.display = "none";
-  pauseIcon.style.display = "block";
+  pauseIcon.style.display =
+    "block";
 }
 
 // --------------------------------------------------
 // Close result -> automatically load new song
 // --------------------------------------------------
 
-resultClose.addEventListener("click", async () => {
-  stopSnippet();
+resultClose.addEventListener(
+  "click",
+  async () => {
+    stopSnippet();
 
-  try {
-    audio.currentTime = 0;
-  } catch {}
+    try {
+      audio.currentTime = 0;
+    } catch {}
 
-  resultEl.hidden = true;
+    resultEl.hidden = true;
+    guessForm.hidden = false;
 
-  guessForm.hidden = false;
-
-  await loadRandom();
-});
+    await loadRandom();
+  }
+);
 
 // --------------------------------------------------
-// Everything
+// Alles rendern
 // --------------------------------------------------
 
 function renderAll() {
@@ -965,4 +1086,7 @@ function renderAll() {
 
 applyLanguage();
 renderAll();
+
+// Normal mode is active.
+// Daily is intentionally disabled above.
 loadRandom();
