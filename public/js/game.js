@@ -315,17 +315,47 @@ guessInput.addEventListener("input", () => {
 
 function renderSuggestions(items) {
   suggestionsEl.innerHTML = "";
+
   items.forEach((item) => {
     const li = document.createElement("li");
-    li.innerHTML = `${item.title}<div class="s-artist">${item.artist}</div>`;
+    li.className = "suggestion-item";
+
+    li.innerHTML = `
+      <img
+        class="suggestion-cover"
+        src="${item.coverUrl || ""}"
+        alt=""
+      />
+
+      <div class="suggestion-info">
+        <div class="suggestion-title">
+          ${escapeHtml(item.title)}
+        </div>
+
+        <div class="s-artist">
+          ${escapeHtml(item.artist)}
+        </div>
+      </div>
+    `;
+
     li.addEventListener("click", () => {
       guessInput.value = `${item.title} - ${item.artist}`;
       round.selectedSongId = item.id;
       suggestionsEl.innerHTML = "";
       submitGuess(item.id, guessInput.value);
     });
+
     suggestionsEl.appendChild(li);
   });
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 document.addEventListener("click", (e) => {
