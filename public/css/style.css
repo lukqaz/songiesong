@@ -336,26 +336,56 @@ body {
 
 .stage-track {
   width: 100%;
-  height: 14px;
-  border-radius: 999px;
-  background: var(--surface-raised);
   display: flex;
-  gap: 4px;
-  padding: 3px;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 22px 0;
 }
 
-.stage-track .seg {
+.stage-segment {
   flex: 1;
+  min-width: 0;
+}
+
+.stage-bar {
+  position: relative;
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
   border-radius: 999px;
-  background: transparent;
+  background: #202a25;
+  border: 1px solid #2c3831;
 }
 
-.stage-track .seg.filled {
+.stage-bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
   background: var(--green);
+  transition: width 0.03s linear;
 }
 
-.stage-track .seg.current {
-  background: #1f8f5c;
+.stage-segment.completed .stage-bar-fill {
+  width: 100%;
+}
+
+.stage-segment.current .stage-bar {
+  border-color: #3a4a41;
+  box-shadow: 0 0 0 1px rgba(80, 255, 150, 0.08);
+}
+
+.stage-bar-label {
+  display: block;
+  margin-top: 6px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.stage-segment.current .stage-bar-label {
+  color: var(--text);
 }
 
 .player {
