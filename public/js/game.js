@@ -885,15 +885,17 @@ function renderHistory() {
     const stageSeconds =
       activeStages[index] ?? currentStageSeconds();
 
-    const leftLabel =
-      `${stageSeconds}s`;
+    const leftLabel = `${stageSeconds}s`;
 
-    const rightLabel =
-      entry.correct
-        ? t("correct")
-        : entry.skipped
-          ? t("skipped")
-          : t("wrong");
+    let rightLabel;
+
+    if (entry.correct) {
+      rightLabel = t("correct");
+    } else if (entry.skipped) {
+      rightLabel = t("skipped");
+    } else {
+      rightLabel = t("wrong");
+    }
 
     li.innerHTML = `
       <span>${escapeHtml(leftLabel)}</span>
