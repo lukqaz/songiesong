@@ -172,6 +172,18 @@ let playbackFrame = null;
 let loadingRound = false;
 
 // --------------------------------------------------
+// Playback-Zustand
+// --------------------------------------------------
+
+// Merkt sich, ob das aktuelle Segment bereits vollständig
+// abgespielt wurde. Wenn true, startet der nächste Play-Klick
+// wieder von vorne.
+let currentStageFinished = false;
+
+// Merkt sich die Position, an der pausiert wurde.
+let pausedAt = null;
+
+// --------------------------------------------------
 // Übersetzungen
 // --------------------------------------------------
 
@@ -321,6 +333,8 @@ function applyDifficulty(id) {
   activeDifficultyId = id;
   activeStages = [...preset.stages];
 
+  resetPlaybackState();
+
   renderDifficultyControls();
   renderStageGrid();
   renderStageTrack();
@@ -370,6 +384,8 @@ function toggleStage(value) {
 
   activeDifficultyId = null;
 
+  resetPlaybackState();
+
   renderDifficultyControls();
   renderStageGrid();
   renderStageTrack();
@@ -378,7 +394,7 @@ function toggleStage(value) {
 }
 
 // --------------------------------------------------
-// NEUE STAGE BAR
+// Stage Progress Bars
 // --------------------------------------------------
 
 function renderStageTrack() {
@@ -407,7 +423,6 @@ function renderStageTrack() {
       document.createElement("div");
 
     fill.className = "stage-bar-fill";
-
     fill.style.width = "0%";
 
     const label =
@@ -423,6 +438,44 @@ function renderStageTrack() {
 
     stageTrackEl.appendChild(wrapper);
   });
+
+  updateStageProgress(
+    currentStageProgress()
+  );
+}
+
+function currentStageProgress() {
+  if (currentStageFinished) {
+    return 1;
+  }
+
+  if (
+    pausedAt === null ||
+    !audio.src
+  ) {
+    return 0;
+  }
+
+  const seconds =
+    currentStageSeconds();
+
+  const startAt =
+    getPlaybackStartTime();
+
+  const elapsed =
+    pausedAt - startAt;
+
+  if (seconds <= 0) {
+    return 1;
+  }
+
+  return Math.max(
+    0,
+    Math.min(
+      1,
+      elapsed / seconds
+    )
+  );
 }
 
 function updateStageProgress(progress) {
@@ -462,6 +515,9 @@ function updateStageProgress(progress) {
 }
 
 function resetCurrentStageProgress() {
+  currentStageFinished = false;
+  pausedAt = null;
+
   const segments =
     stageTrackEl.querySelectorAll(
       ".stage-segment"
@@ -483,6 +539,20 @@ function resetCurrentStageProgress() {
   });
 }
 
+function resetPlaybackState() {
+  cancelPlaybackLoop();
+
+  audio.pause();
+
+  currentStageFinished = false;
+  pausedAt = null;
+
+  playIcon.style.display = "block";
+  pauseIcon.style.display = "none";
+
+  resetCurrentStageProgress();
+}
+
 function currentStageSeconds() {
   const index = Math.min(
     round.attempt,
@@ -490,6 +560,13 @@ function currentStageSeconds() {
   );
 
   return activeStages[index];
+}
+
+function getPlaybackStartTime() {
+  return useHookStart &&
+    round.hookOffsetSeconds
+    ? round.hookOffsetSeconds
+    : 0;
 }
 
 function updateStageTime() {
@@ -579,6 +656,10 @@ startFromHookBtn.addEventListener(
 function setHookMode(useHook) {
   useHookStart = useHook;
 
+  // Changing the starting point means the current
+  // playback position can no longer be reused.
+  resetPlaybackState();
+
   startFromBeginBtn.classList.toggle(
     "active",
     !useHook
@@ -650,7 +731,7 @@ async function loadRandom() {
 
   loadingRound = true;
 
-  stopSnippet();
+  resetPlaybackState();
 
   try {
     const res = await fetch(
@@ -699,7 +780,7 @@ async function loadRandom() {
 }
 
 function applyRoundData(data) {
-  stopSnippet();
+  resetPlaybackState();
 
   audio.src =
     data.previewUrl || "";
@@ -791,7 +872,7 @@ playBtn.addEventListener(
     if (audio.paused) {
       playSnippet();
     } else {
-      stopSnippet();
+      pauseSnippet();
     }
   }
 );
@@ -801,24 +882,48 @@ function playSnippet() {
     currentStageSeconds();
 
   const startAt =
-    useHookStart &&
-    round.hookOffsetSeconds
-      ? round.hookOffsetSeconds
-      : 0;
+    getPlaybackStartTime();
+
+  // Wenn die Stage bereits vollständig abgespielt wurde,
+  // startet ein neuer Play-Klick wieder am Anfang.
+  if (currentStageFinished) {
+    try {
+      audio.currentTime =
+        startAt;
+    } catch {
+      return;
+    }
+
+    pausedAt = null;
+    currentStageFinished = false;
+
+    resetCurrentStageProgress();
+  } else {
+    // Wenn wir pausiert haben, an dieser Position fortsetzen.
+    if (
+      pausedAt !== null &&
+      Number.isFinite(pausedAt)
+    ) {
+      try {
+        audio.currentTime =
+          pausedAt;
+      } catch {
+        return;
+      }
+    } else {
+      // Erster Play der Stage.
+      try {
+        audio.currentTime =
+          startAt;
+      } catch {
+        return;
+      }
+
+      resetCurrentStageProgress();
+    }
+  }
 
   cancelPlaybackLoop();
-
-  // Wichtig:
-  // Bei jedem neuen Play startet die Stage
-  // wieder bei 0.
-  resetCurrentStageProgress();
-
-  try {
-    audio.currentTime =
-      startAt;
-  } catch {
-    return;
-  }
 
   audio
     .play()
@@ -829,18 +934,29 @@ function playSnippet() {
       pauseIcon.style.display =
         "block";
 
+      const actualStartTime =
+        getPlaybackStartTime();
+
       const endTime =
-        startAt + seconds;
+        actualStartTime + seconds;
 
       function checkPlaybackEnd() {
         if (audio.paused) {
+          pausedAt =
+            audio.currentTime;
+
           playbackFrame = null;
+
+          updateStageProgress(
+            currentStageProgress()
+          );
+
           return;
         }
 
         const elapsed =
           audio.currentTime -
-          startAt;
+          actualStartTime;
 
         const progress =
           Math.max(
@@ -859,8 +975,21 @@ function playSnippet() {
           audio.currentTime >=
           endTime
         ) {
+          try {
+            audio.currentTime =
+              endTime;
+          } catch {}
+
+          currentStageFinished =
+            true;
+
+          pausedAt =
+            endTime;
+
           updateStageProgress(1);
+
           stopSnippet(false);
+
           return;
         }
 
@@ -878,6 +1007,27 @@ function playSnippet() {
     .catch(() => {
       stopSnippet();
     });
+}
+
+function pauseSnippet() {
+  if (audio.paused) return;
+
+  pausedAt =
+    audio.currentTime;
+
+  cancelPlaybackLoop();
+
+  audio.pause();
+
+  playIcon.style.display =
+    "block";
+
+  pauseIcon.style.display =
+    "none";
+
+  updateStageProgress(
+    currentStageProgress()
+  );
 }
 
 function cancelPlaybackLoop() {
@@ -904,6 +1054,9 @@ function stopSnippet(
     "none";
 
   if (resetProgress) {
+    currentStageFinished = false;
+    pausedAt = null;
+
     resetCurrentStageProgress();
   }
 }
@@ -973,6 +1126,8 @@ function renderSuggestions(
   suggestionsEl.innerHTML =
     "";
 
+  // Kein künstliches Limit mehr.
+  // Alle Ergebnisse vom Server werden angezeigt.
   items.forEach((item) => {
     const li =
       document.createElement(
@@ -1184,6 +1339,9 @@ async function submitGuess(
     null;
 
   guessInput.value = "";
+
+  currentStageFinished = false;
+  pausedAt = null;
 
   const gameOver =
     Boolean(data.correct) ||
