@@ -21,74 +21,265 @@ const difficultyStack = document.getElementById("difficulty-stack");
 const difficultyPills = document.getElementById("difficulty-pills");
 const stageGrid = document.getElementById("stage-grid");
 const rerollBtn = document.getElementById("reroll-btn");
-const autoRerollCheckbox = document.getElementById("auto-reroll");
 const volumeSlider = document.getElementById("volume-slider");
 const volumeValue = document.getElementById("volume-value");
 const startFromBeginBtn = document.getElementById("start-from-begin");
 const startFromHookBtn = document.getElementById("start-from-hook");
 
-// Alle waehlbaren Ausschnittslaengen in Sekunden (muss zum Server passen)
+const settingsBtn = document.getElementById("settings-btn");
+const settingsPanel = document.getElementById("settings-panel");
+const settingsClose = document.getElementById("settings-close");
+const languageButtons = document.querySelectorAll("[data-language]");
+
+// Alle waehlbaren Ausschnittslaengen in Sekunden
 const STAGE_VALUES = [0.01, 0.1, 0.5, 2, 8, 15];
 
 const DIFFICULTIES = [
-  { id: "easy", label: "Easy", stages: [0.1, 0.5, 2, 8, 15] },
-  { id: "medium", label: "Medium", stages: [0.1, 0.5, 2, 8] },
-  { id: "hard", label: "Hard", stages: [0.01, 0.1, 0.5, 2] },
-  { id: "expert", label: "Expert", stages: [0.01, 0.1, 0.5] },
-  { id: "impossible", label: "Impossible", stages: [0.01, 0.1] },
+  {
+    id: "easy",
+    label: "easy",
+    stages: [0.1, 0.5, 2, 8, 15],
+  },
+  {
+    id: "medium",
+    label: "medium",
+    stages: [0.1, 0.5, 2, 8],
+  },
+  {
+    id: "hard",
+    label: "hard",
+    stages: [0.01, 0.1, 0.5, 2],
+  },
+  {
+    id: "expert",
+    label: "expert",
+    stages: [0.01, 0.1, 0.5],
+  },
+  {
+    id: "impossible",
+    label: "impossible",
+    stages: [0.01, 0.1],
+  },
 ];
+
+const translations = {
+  en: {
+    settings: "Settings",
+    language: "Language",
+    normal: "Normal",
+    newSong: "New Song",
+    filter: "Filter",
+    feedback: "Feedback",
+    searchSongs: "Search songs...",
+    guessSong: "Guess the song",
+    playSnippet: "Play snippet",
+    skip: "Skip",
+    songStart: "Song Start",
+    fromBeginning: "From beginning",
+    fromHook: "Main Hook",
+    stages: "Stages",
+    volume: "Volume",
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard",
+    expert: "Expert",
+    impossible: "Impossible",
+    listenSpotify: "Listen on Spotify",
+    close: "Close",
+    youGotIt: "You got it! ✓",
+    songWas: "The song was:",
+    correct: "Correct",
+    wrong: "Wrong",
+    skipped: "Skipped",
+    notice: "Notice",
+    noSongPool: "No songs available. Import a playlist in the admin panel first.",
+    roundExpired: "Round expired. Please start a new song.",
+    unavailable: "Game currently unavailable.",
+  },
+
+  de: {
+    settings: "Einstellungen",
+    language: "Sprache",
+    normal: "Normal",
+    newSong: "Neuer Song",
+    filter: "Filter",
+    feedback: "Feedback",
+    searchSongs: "Songs durchsuchen...",
+    guessSong: "Song erraten",
+    playSnippet: "Ausschnitt abspielen",
+    skip: "Überspringen",
+    songStart: "Song-Start",
+    fromBeginning: "Von Anfang an",
+    fromHook: "Main Hook",
+    stages: "Stages",
+    volume: "Lautstärke",
+    easy: "Einfach",
+    medium: "Mittel",
+    hard: "Schwer",
+    expert: "Experte",
+    impossible: "Unmöglich",
+    listenSpotify: "Auf Spotify anhören",
+    close: "Schließen",
+    youGotIt: "Du hast es! ✓",
+    songWas: "Der Song war:",
+    correct: "Richtig",
+    wrong: "Falsch",
+    skipped: "Übersprungen",
+    notice: "Hinweis",
+    noSongPool: "Keine Songs verfügbar. Importiere zuerst eine Playlist im Admin-Bereich.",
+    roundExpired: "Runde abgelaufen. Bitte starte einen neuen Song.",
+    unavailable: "Das Spiel ist aktuell nicht verfügbar.",
+  },
+};
+
+let currentLanguage = localStorage.getItem("songguessr_language") || "en";
 
 let activeStages = [...DIFFICULTIES[0].stages];
 let activeDifficultyId = "easy";
 let useHookStart = false;
 
 let round = {
-  mode: "daily", // "daily" | "practice"
-  roundId: null, // nur bei practice gesetzt
-  date: null,
+  mode: "normal",
+  roundId: null,
   previewUrl: null,
   hookAvailable: false,
+  hookOffsetSeconds: 0,
   attempt: 0,
   history: [],
   finished: false,
   selectedSongId: null,
 };
 
-let playTimeout = null;
+let playbackFrame = null;
+let loadingRound = false;
 
-// --- Presets links + mittig rendern ---
+// --------------------------------------------------
+// Translation
+// --------------------------------------------------
+
+function t(key) {
+  return translations[currentLanguage]?.[key] ?? translations.en[key] ?? key;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLanguage;
+
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    element.setAttribute(
+      "aria-label",
+      t(element.dataset.i18nAriaLabel)
+    );
+  });
+
+  languageButtons.forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.language === currentLanguage
+    );
+  });
+
+  renderDifficultyControls();
+  renderHistory();
+  renderAttempts();
+  updateStageTime();
+}
+
+function setLanguage(language) {
+  if (!translations[language]) return;
+
+  currentLanguage = language;
+
+  localStorage.setItem(
+    "songguessr_language",
+    currentLanguage
+  );
+
+  applyLanguage();
+}
+
+// --------------------------------------------------
+// Settings
+// --------------------------------------------------
+
+settingsBtn.addEventListener("click", () => {
+  settingsPanel.hidden = !settingsPanel.hidden;
+});
+
+settingsClose.addEventListener("click", () => {
+  settingsPanel.hidden = true;
+});
+
+languageButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setLanguage(button.dataset.language);
+  });
+});
+
+document.addEventListener("click", (event) => {
+  if (
+    !settingsPanel.hidden &&
+    !event.target.closest(".settings-panel") &&
+    !event.target.closest("#settings-btn")
+  ) {
+    settingsPanel.hidden = true;
+  }
+});
+
+// --------------------------------------------------
+// Difficulty
+// --------------------------------------------------
+
 function renderDifficultyControls() {
   difficultyStack.innerHTML = "";
   difficultyPills.innerHTML = "";
 
-  DIFFICULTIES.forEach((d) => {
+  DIFFICULTIES.forEach((difficulty) => {
+    const label = t(difficulty.label);
+
     const sideBtn = document.createElement("button");
     sideBtn.className = "side-btn";
-    sideBtn.textContent = d.label;
+    sideBtn.textContent = label;
 
-    if (d.id === activeDifficultyId) {
+    if (difficulty.id === activeDifficultyId) {
       sideBtn.style.background = "var(--green)";
       sideBtn.style.color = "#06170e";
     }
 
-    sideBtn.addEventListener("click", () => applyDifficulty(d.id));
+    sideBtn.addEventListener("click", () => {
+      applyDifficulty(difficulty.id);
+    });
+
     difficultyStack.appendChild(sideBtn);
 
     const pill = document.createElement("button");
     pill.className = "pill";
-    pill.textContent = d.label;
+    pill.textContent = label;
 
-    if (d.id === activeDifficultyId) {
-      pill.classList.add(`active-${d.id}`);
+    if (difficulty.id === activeDifficultyId) {
+      pill.classList.add(`active-${difficulty.id}`);
     }
 
-    pill.addEventListener("click", () => applyDifficulty(d.id));
+    pill.addEventListener("click", () => {
+      applyDifficulty(difficulty.id);
+    });
+
     difficultyPills.appendChild(pill);
   });
 }
 
 function applyDifficulty(id) {
-  const preset = DIFFICULTIES.find((d) => d.id === id);
+  const preset = DIFFICULTIES.find(
+    (difficulty) => difficulty.id === id
+  );
+
   if (!preset) return;
 
   activeDifficultyId = id;
@@ -101,33 +292,44 @@ function applyDifficulty(id) {
   updateStageTime();
 }
 
-// --- Einzelne Stage-Chips rechts ---
+// --------------------------------------------------
+// Stage grid
+// --------------------------------------------------
+
 function renderStageGrid() {
   stageGrid.innerHTML = "";
 
-  STAGE_VALUES.forEach((val) => {
+  STAGE_VALUES.forEach((value) => {
     const chip = document.createElement("button");
-    chip.className = "stage-chip";
-    chip.textContent = `${val}s`;
 
-    if (activeStages.includes(val)) {
+    chip.className = "stage-chip";
+    chip.textContent = `${value}s`;
+
+    if (activeStages.includes(value)) {
       chip.classList.add("active");
     }
 
-    chip.addEventListener("click", () => toggleStage(val));
+    chip.addEventListener("click", () => {
+      toggleStage(value);
+    });
+
     stageGrid.appendChild(chip);
   });
 }
 
-function toggleStage(val) {
+function toggleStage(value) {
   if (round.attempt > 0) return;
 
-  if (activeStages.includes(val)) {
+  if (activeStages.includes(value)) {
     if (activeStages.length <= 1) return;
 
-    activeStages = activeStages.filter((v) => v !== val);
+    activeStages = activeStages.filter(
+      (stage) => stage !== value
+    );
   } else {
-    activeStages = [...activeStages, val].sort((a, b) => a - b);
+    activeStages = [...activeStages, value].sort(
+      (a, b) => a - b
+    );
   }
 
   activeDifficultyId = null;
@@ -139,44 +341,60 @@ function toggleStage(val) {
   updateStageTime();
 }
 
+// --------------------------------------------------
+// Stage track
+// --------------------------------------------------
+
 function renderStageTrack() {
   stageTrackEl.innerHTML = "";
 
-  activeStages.forEach((_, i) => {
-    const seg = document.createElement("div");
-    seg.className = "seg";
+  activeStages.forEach((_, index) => {
+    const segment = document.createElement("div");
 
-    if (i < round.attempt) {
-      seg.classList.add("filled");
-    } else if (i === round.attempt) {
-      seg.classList.add("current");
+    segment.className = "seg";
+
+    if (index < round.attempt) {
+      segment.classList.add("filled");
+    } else if (index === round.attempt) {
+      segment.classList.add("current");
     }
 
-    stageTrackEl.appendChild(seg);
+    stageTrackEl.appendChild(segment);
   });
 }
 
 function currentStageSeconds() {
-  const idx = Math.min(round.attempt, activeStages.length - 1);
-  return activeStages[idx];
+  const index = Math.min(
+    round.attempt,
+    activeStages.length - 1
+  );
+
+  return activeStages[index];
 }
 
 function updateStageTime() {
   stageTimeEl.textContent = `${currentStageSeconds()}s`;
 }
 
+// --------------------------------------------------
+// Attempts
+// --------------------------------------------------
+
 function renderAttempts() {
   attemptsRow.innerHTML = "";
 
-  activeStages.forEach((_, i) => {
+  activeStages.forEach((_, index) => {
     const dot = document.createElement("div");
+
     dot.className = "attempt-dot";
 
-    if (i < round.history.length) {
+    if (index < round.history.length) {
       dot.classList.add(
-        round.history[i].correct ? "used-correct" : "used-wrong"
+        round.history[index].correct
+          ? "used-correct"
+          : "used-wrong"
       );
-    } else if (i === round.attempt) {
+    } else if (index === round.attempt) {
       dot.classList.add("current");
     }
 
@@ -184,36 +402,63 @@ function renderAttempts() {
   });
 }
 
+// --------------------------------------------------
+// History
+// --------------------------------------------------
+
 function renderHistory() {
   historyEl.innerHTML = "";
 
   round.history.forEach((entry) => {
     const li = document.createElement("li");
 
-    li.className = entry.correct ? "correct" : "wrong";
+    li.className = entry.correct
+      ? "correct"
+      : "wrong";
 
     li.innerHTML = `
       <span>${escapeHtml(entry.label)}</span>
-      <span>${entry.correct ? "Richtig" : "Falsch"}</span>
+      <span>
+        ${
+          entry.correct
+            ? t("correct")
+            : entry.label === t("skipped")
+              ? t("skipped")
+              : t("wrong")
+        }
+      </span>
     `;
 
     historyEl.appendChild(li);
   });
 }
 
-// --- Song-Start: Anfang vs. Hook ---
-startFromBeginBtn.addEventListener("click", () => setHookMode(false));
+// --------------------------------------------------
+// Song start
+// --------------------------------------------------
+
+startFromBeginBtn.addEventListener("click", () => {
+  setHookMode(false);
+});
 
 startFromHookBtn.addEventListener("click", () => {
   if (!round.hookAvailable) return;
+
   setHookMode(true);
 });
 
 function setHookMode(useHook) {
   useHookStart = useHook;
 
-  startFromBeginBtn.classList.toggle("active", !useHook);
-  startFromHookBtn.classList.toggle("active", useHook);
+  startFromBeginBtn.classList.toggle(
+    "active",
+    !useHook
+  );
+
+  startFromHookBtn.classList.toggle(
+    "active",
+    useHook
+  );
 }
 
 function refreshHookAvailability() {
@@ -224,110 +469,80 @@ function refreshHookAvailability() {
   }
 }
 
-// --- Lautstaerke ---
-volumeSlider.addEventListener("input", () => {
-  const v = Number(volumeSlider.value);
+// --------------------------------------------------
+// Volume
+// --------------------------------------------------
 
-  audio.volume = v / 100;
-  volumeValue.textContent = `${v}%`;
+volumeSlider.addEventListener("input", () => {
+  const value = Number(volumeSlider.value);
+
+  audio.volume = value / 100;
+  volumeValue.textContent = `${value}%`;
 });
 
 audio.volume = 1;
 
-// --- Laden: taeglicher Song ---
-async function loadDaily() {
-  const res = await fetch("/api/game/today");
+// --------------------------------------------------
+// Load normal/random round
+// --------------------------------------------------
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-
-    showBlockingMessage(
-      err.error || "Spiel aktuell nicht verfuegbar."
-    );
-
-    return;
-  }
-
-  const data = await res.json();
-
-  applyRoundData(data);
-
-  modeLabel.textContent = "Taegliche Runde";
-
-  const saved = loadSavedDailyState(data.date);
-
-  if (saved) {
-    round.attempt = saved.attempt;
-    round.history = saved.history;
-    round.finished = saved.finished;
-  }
-
-  round.date = data.date;
-
-  renderAll();
-
-  if (round.finished && saved?.reveal) {
-    showResult(saved.reveal, saved.won);
-  }
-}
-
-function loadSavedDailyState(date) {
-  try {
-    const raw = localStorage.getItem("tageslied_" + date);
-
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistDailyState(extra = {}) {
-  if (round.mode !== "daily") return;
-
-  localStorage.setItem(
-    "tageslied_" + round.date,
-    JSON.stringify({
-      attempt: round.attempt,
-      history: round.history,
-      finished: round.finished,
-      ...extra,
-    })
-  );
-}
-
-// --- Practice / Reroll ---
 async function loadRandom() {
-  const res = await fetch("/api/game/random");
+  if (loadingRound) return;
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
+  loadingRound = true;
+
+  stopSnippet();
+
+  try {
+    const res = await fetch("/api/game/random", {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+
+      showBlockingMessage(
+        error.error || t("noSongPool")
+      );
+
+      return;
+    }
+
+    const data = await res.json();
+
+    applyRoundData(data);
+
+    round.roundId = data.roundId;
+
+    renderAll();
+
+    guessInput.focus();
+  } catch (error) {
+    console.error("Round loading error:", error);
 
     showBlockingMessage(
-      err.error || "Kein Song-Pool vorhanden."
+      t("unavailable")
     );
-
-    return;
+  } finally {
+    loadingRound = false;
   }
-
-  const data = await res.json();
-
-  applyRoundData(data);
-
-  round.roundId = data.roundId;
-
-  modeLabel.textContent = "Practice-Runde";
-
-  renderAll();
 }
 
 function applyRoundData(data) {
   stopSnippet();
 
-  audio.src = data.previewUrl;
+  audio.src = data.previewUrl || "";
 
-  round.mode = data.mode;
-  round.previewUrl = data.previewUrl;
-  round.hookAvailable = Boolean(data.hookAvailable);
+  round.mode = "normal";
+  round.roundId = data.roundId || null;
+  round.previewUrl = data.previewUrl || null;
+  round.hookAvailable = Boolean(
+    data.hookAvailable
+  );
+
+  round.hookOffsetSeconds =
+    Number(data.hookOffsetSeconds) || 0;
+
   round.attempt = 0;
   round.history = [];
   round.finished = false;
@@ -335,6 +550,9 @@ function applyRoundData(data) {
 
   resultEl.hidden = true;
   guessForm.hidden = false;
+
+  guessInput.value = "";
+  suggestionsEl.innerHTML = "";
 
   refreshHookAvailability();
 
@@ -346,22 +564,29 @@ function showBlockingMessage(text) {
   resultEl.hidden = false;
   guessForm.hidden = true;
 
-  const modal = resultEl.querySelector(".result-modal");
+  const modal = resultEl.querySelector(
+    ".result-modal"
+  );
 
   if (modal) {
     modal.classList.remove("won", "lost");
   }
 
-  resultStatus.textContent = "Hinweis";
+  resultStatus.textContent = t("notice");
   resultSong.textContent = text;
 
   resultCover.removeAttribute("src");
   resultLink.style.display = "none";
 }
 
-rerollBtn.addEventListener("click", () => loadRandom());
+rerollBtn.addEventListener("click", () => {
+  loadRandom();
+});
 
-// --- Wiedergabe ---
+// --------------------------------------------------
+// Playback
+// --------------------------------------------------
+
 playBtn.addEventListener("click", () => {
   if (round.finished) return;
 
@@ -376,15 +601,21 @@ function playSnippet() {
   const seconds = currentStageSeconds();
 
   const startAt =
-    useHookStart && round.hookOffsetSeconds
+    useHookStart &&
+    round.hookOffsetSeconds
       ? round.hookOffsetSeconds
       : 0;
 
-  audio.currentTime = startAt;
+  cancelPlaybackLoop();
 
-  clearTimeout(playTimeout);
+  try {
+    audio.currentTime = startAt;
+  } catch {
+    return;
+  }
 
-  audio.play()
+  audio
+    .play()
     .then(() => {
       playIcon.style.display = "none";
       pauseIcon.style.display = "block";
@@ -392,32 +623,50 @@ function playSnippet() {
       const endTime = startAt + seconds;
 
       function checkPlaybackEnd() {
-        if (audio.paused) return;
+        if (audio.paused) {
+          playbackFrame = null;
+          return;
+        }
 
         if (audio.currentTime >= endTime) {
           stopSnippet();
           return;
         }
 
-        requestAnimationFrame(checkPlaybackEnd);
+        playbackFrame = requestAnimationFrame(
+          checkPlaybackEnd
+        );
       }
 
-      requestAnimationFrame(checkPlaybackEnd);
+      playbackFrame = requestAnimationFrame(
+        checkPlaybackEnd
+      );
     })
     .catch(() => {
       stopSnippet();
     });
 }
 
-function stopSnippet() {
-  audio.pause();
+function cancelPlaybackLoop() {
+  if (playbackFrame !== null) {
+    cancelAnimationFrame(playbackFrame);
+    playbackFrame = null;
+  }
+}
 
-  clearTimeout(playTimeout);
+function stopSnippet() {
+  cancelPlaybackLoop();
+
+  audio.pause();
 
   playIcon.style.display = "block";
   pauseIcon.style.display = "none";
 }
-// --- Autocomplete ---
+
+// --------------------------------------------------
+// Autocomplete
+// --------------------------------------------------
+
 let suggestionTimer = null;
 
 guessInput.addEventListener("input", () => {
@@ -425,9 +674,9 @@ guessInput.addEventListener("input", () => {
 
   clearTimeout(suggestionTimer);
 
-  const q = guessInput.value.trim();
+  const query = guessInput.value.trim();
 
-  if (q.length < 2) {
+  if (query.length < 2) {
     suggestionsEl.innerHTML = "";
     return;
   }
@@ -435,14 +684,18 @@ guessInput.addEventListener("input", () => {
   suggestionTimer = setTimeout(async () => {
     try {
       const res = await fetch(
-        `/api/game/suggestions?q=${encodeURIComponent(q)}`
+        `/api/game/suggestions?q=${encodeURIComponent(query)}`
       );
 
       const items = await res.json();
 
       renderSuggestions(items);
-    } catch (err) {
-      console.error("Autocomplete Fehler:", err);
+    } catch (error) {
+      console.error(
+        "Autocomplete error:",
+        error
+      );
+
       suggestionsEl.innerHTML = "";
     }
   }, 200);
@@ -475,13 +728,17 @@ function renderSuggestions(items) {
     `;
 
     li.addEventListener("click", () => {
-      guessInput.value = `${item.title} - ${item.artist}`;
+      guessInput.value =
+        `${item.title} - ${item.artist}`;
 
       round.selectedSongId = item.id;
 
       suggestionsEl.innerHTML = "";
 
-      submitGuess(item.id, guessInput.value);
+      submitGuess(
+        item.id,
+        guessInput.value
+      );
     });
 
     suggestionsEl.appendChild(li);
@@ -497,58 +754,113 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-document.addEventListener("click", (e) => {
-  if (!e.target.closest(".input-wrap")) {
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".input-wrap")) {
     suggestionsEl.innerHTML = "";
   }
 });
 
+// --------------------------------------------------
+// Skip
+// --------------------------------------------------
+
 skipBtn.addEventListener("click", () => {
   if (!round.finished) {
-    submitGuess(null, "Uebersprungen");
+    submitGuess(
+      null,
+      t("skipped")
+    );
   }
 });
 
-// --- Guess ---
+// --------------------------------------------------
+// Guess
+// --------------------------------------------------
+
+guessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  if (
+    round.selectedSongId &&
+    !round.finished
+  ) {
+    submitGuess(
+      round.selectedSongId,
+      guessInput.value
+    );
+  }
+});
+
 async function submitGuess(songId, label) {
   if (round.finished) return;
 
-  // Audio nach jedem Guess/Skip sauber zuruecksetzen
+  if (!round.roundId) {
+    showBlockingMessage(
+      t("roundExpired")
+    );
+
+    return;
+  }
+
   stopSnippet();
-  audio.currentTime = 0;
+
+  try {
+    audio.currentTime = 0;
+  } catch {}
+
   playIcon.style.display = "block";
   pauseIcon.style.display = "none";
 
-  const attemptNumber = round.attempt + 1;
+  const attemptNumber =
+    round.attempt + 1;
 
-  const res = await fetch("/api/game/guess", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      songId,
-      attempt: attemptNumber,
-      maxAttempts: activeStages.length,
-      roundId:
-        round.mode === "practice"
-          ? round.roundId
-          : undefined,
-    }),
-  });
+  let res;
 
-  const data = await res.json();
+  try {
+    res = await fetch("/api/game/guess", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        songId,
+        attempt: attemptNumber,
+        maxAttempts: activeStages.length,
+        roundId: round.roundId,
+      }),
+    });
+  } catch (error) {
+    console.error(
+      "Guess request failed:",
+      error
+    );
+
+    return;
+  }
+
+  const data = await res.json().catch(
+    () => ({})
+  );
+
+  if (!res.ok) {
+    showBlockingMessage(
+      data.error || t("roundExpired")
+    );
+
+    return;
+  }
 
   round.history.push({
     label,
-    correct: !!data.correct,
+    correct: Boolean(data.correct),
   });
 
   round.attempt = attemptNumber;
   guessInput.value = "";
+  round.selectedSongId = null;
 
   const gameOver =
-    data.correct ||
+    Boolean(data.correct) ||
     round.attempt >= activeStages.length;
 
   if (gameOver) {
@@ -561,52 +873,57 @@ async function submitGuess(songId, label) {
   updateStageTime();
 
   if (gameOver && data.reveal) {
-    showResult(data.reveal, data.correct);
-
-    persistDailyState({
-      reveal: data.reveal,
-      won: data.correct,
-    });
-
-    if (
-      round.mode === "practice" &&
-      autoRerollCheckbox.checked
-    ) {
-      setTimeout(() => loadRandom(), 1800);
-    }
-  } else {
-    persistDailyState();
+    showResult(
+      data.reveal,
+      Boolean(data.correct)
+    );
   }
 }
 
-// --- Ergebnis ---
+// --------------------------------------------------
+// Result
+// --------------------------------------------------
+
 function showResult(reveal, won) {
   resultEl.hidden = false;
   guessForm.hidden = true;
 
-  const modal = resultEl.querySelector(".result-modal");
+  const modal = resultEl.querySelector(
+    ".result-modal"
+  );
 
   if (modal) {
-    modal.classList.toggle("won", won);
-    modal.classList.toggle("lost", !won);
+    modal.classList.toggle(
+      "won",
+      won
+    );
+
+    modal.classList.toggle(
+      "lost",
+      !won
+    );
   }
 
   resultStatus.textContent = won
-    ? "Du hast es! ✓"
-    : "Der Song war:";
+    ? t("youGotIt")
+    : t("songWas");
 
   resultSong.textContent =
     `${reveal.title} - ${reveal.artist}`;
 
-  resultCover.src = reveal.coverUrl || "";
+  resultCover.src =
+    reveal.coverUrl || "";
 
   resultLink.style.display = "inline";
-  resultLink.href = reveal.spotifyUrl || "#";
+  resultLink.href =
+    reveal.spotifyUrl || "#";
 
-  // Ergebnis-Song abspielen
+  // Ergebnis-Song komplett abspielen
   stopSnippet();
 
-  audio.currentTime = 0;
+  try {
+    audio.currentTime = 0;
+  } catch {}
 
   audio.play().catch(() => {});
 
@@ -614,19 +931,28 @@ function showResult(reveal, won) {
   pauseIcon.style.display = "block";
 }
 
-// --- Ergebnis schliessen ---
-resultClose.addEventListener("click", () => {
-  audio.pause();
-  audio.currentTime = 0;
+// --------------------------------------------------
+// Close result -> automatically load new song
+// --------------------------------------------------
 
-  playIcon.style.display = "block";
-  pauseIcon.style.display = "none";
+resultClose.addEventListener("click", async () => {
+  stopSnippet();
+
+  try {
+    audio.currentTime = 0;
+  } catch {}
 
   resultEl.hidden = true;
+
   guessForm.hidden = false;
+
+  await loadRandom();
 });
 
-// --- Alles rendern ---
+// --------------------------------------------------
+// Everything
+// --------------------------------------------------
+
 function renderAll() {
   renderDifficultyControls();
   renderStageGrid();
@@ -637,5 +963,6 @@ function renderAll() {
   refreshHookAvailability();
 }
 
+applyLanguage();
 renderAll();
-loadDaily();
+loadRandom();
