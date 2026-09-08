@@ -15,6 +15,7 @@ const resultStatus = document.getElementById("result-status");
 const resultSong = document.getElementById("result-song");
 const resultCover = document.getElementById("result-cover");
 const resultLink = document.getElementById("result-link");
+const resultClose = document.getElementById("result-close");
 const modeLabel = document.getElementById("mode-label");
 const difficultyStack = document.getElementById("difficulty-stack");
 const difficultyPills = document.getElementById("difficulty-pills");
@@ -418,12 +419,38 @@ async function submitGuess(songId, label) {
 function showResult(reveal, won) {
   resultEl.hidden = false;
   guessForm.hidden = true;
-  resultLink.style.display = "inline";
-  resultStatus.textContent = won ? "Richtig erraten!" : "Leider nicht erraten";
+
+  resultStatus.textContent = won
+    ? "Du hast es! ✓"
+    : "Leider nicht erraten";
+
   resultSong.textContent = `${reveal.title} - ${reveal.artist}`;
+
   resultCover.src = reveal.coverUrl || "";
+
+  resultLink.style.display = "inline";
   resultLink.href = reveal.spotifyUrl || "#";
+
+  // Kompletten Song abspielen
+  stopSnippet();
+
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+
+  playIcon.style.display = "none";
+  pauseIcon.style.display = "block";
 }
+
+resultClose.addEventListener("click", () => {
+  audio.pause();
+  audio.currentTime = 0;
+
+  playIcon.style.display = "block";
+  pauseIcon.style.display = "none";
+
+  resultEl.hidden = true;
+  guessForm.hidden = false;
+});
 
 function renderAll() {
   renderDifficultyControls();
