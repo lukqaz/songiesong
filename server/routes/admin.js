@@ -31,8 +31,14 @@ router.post("/playlist", express.json(), requireAdminToken, async (req, res) => 
     const result = await importPlaylist(playlistUrl);
     res.json({ success: true, ...result });
   } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+  console.error("PLAYLIST IMPORT ERROR:", err);
+  console.error(err.stack);
+
+  res.status(400).json({
+    error: err.message,
+    stack: err.stack
+  });
+}
 });
 
 module.exports = router;
