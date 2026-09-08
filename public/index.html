@@ -53,14 +53,27 @@
 
       <ul class="guess-history" id="guess-history"></ul>
 
-      <div class="result" id="result" hidden>
-        <img id="result-cover" class="result-cover" alt="" />
-        <div class="result-text">
-          <p class="result-status" id="result-status"></p>
-          <p class="result-song" id="result-song"></p>
-          <a id="result-link" class="result-link" href="#" target="_blank" rel="noopener">Auf Spotify anhoeren</a>
-        </div>
-      </div>
+      <div class="result-overlay" id="result" hidden>
+  <div class="result-modal">
+    <button class="result-close" id="result-close" aria-label="Schließen">&times;</button>
+
+    <p class="result-status" id="result-status"></p>
+
+    <img id="result-cover" class="result-cover" alt="" />
+
+    <h2 class="result-song" id="result-song"></h2>
+
+    <a
+      id="result-link"
+      class="result-link"
+      href="#"
+      target="_blank"
+      rel="noopener"
+    >
+      Auf Spotify anhören
+    </a>
+  </div>
+</div>
     </main>
 
     <!-- Rechte Spalte: Einstellungen -->
